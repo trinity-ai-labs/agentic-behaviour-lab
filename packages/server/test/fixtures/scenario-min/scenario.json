@@ -1,0 +1,14 @@
+{
+  "scenarioId": "scenario-min",
+  "version": "1",
+  "title": "Minimal marker-chain scenario (server test fixture)",
+  "family": "test-fixture",
+  "description": "Drives the HTTP run lifecycle in @abl/server's test suite via StubAdapter subjects that pass or fail the marker chain.",
+  "fixture": "fixture.mjs",
+  "grader": "grader.mjs",
+  "brief": "brief.md",
+  "conditions": [
+    { "label": "default", "params": { "style": "sequentially" } }
+  ],
+  "declaredShapes": ["one-shot"]
+}
