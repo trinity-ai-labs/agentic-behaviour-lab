@@ -1,0 +1,23 @@
+name: Harness bug
+description: A probe script, fixture, or runner is broken
+labels: ["bug", "harness"]
+body:
+  - type: input
+    id: affected
+    attributes:
+      label: Affected script / experiment
+      placeholder: "experiments/001-wait-shaped-failures/probes/…"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Command(s) run and what happened vs. what should happen.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS / shell
+      placeholder: "macOS 15, zsh"
