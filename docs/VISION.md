@@ -95,13 +95,13 @@ behaviour.
 4. **Scenario library** — the recurring behaviours worth benchmarking
    continuously, seeded from real production incidents and from auditing the
    behavioural assumptions embedded in real prompt pipelines.
-5. **The lab as a product** — adapted from Trinity's proven subsystems (ported
-   pragmatically; patterns and code, never secrets or internal infra detail):
-   a chat surface where you describe the behaviour you want tested and it
-   scaffolds the experiment; ephemeral per-trial **workspaces** like Trinity's
-   worktree system but git-optional (a sandbox-dir lifecycle: seed fixtures,
-   run, harvest artifacts, destroy); and a **dashboard** over the artifact
-   store — rates per condition, drift per model release, verbatim
-   final-message browsing.
+5. **The lab as a product** — a chat surface where you describe the behaviour
+   you want tested and it scaffolds the experiment; ephemeral per-trial
+   **workspaces** (a git-optional sandbox-dir lifecycle: seed fixtures, run,
+   harvest artifacts, destroy); and a **dashboard** over the artifact store —
+   rates per condition, drift per model release, verbatim final-message
+   browsing. Deliberately a **solo, local-first tool**: no accounts, no auth,
+   no team/collaboration features — sharing happens through committed
+   artifacts, not live sessions.
 6. **Longitudinal tracking** — re-run the suite per model release; publish the
    deltas.

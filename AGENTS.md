@@ -33,7 +33,13 @@ run artifacts live under `experiments/`.
 - **Every trial carries its environment fingerprint** (model, harness, OS,
   scenario + grader versions). Unfingerprinted records are worthless.
 - **Public repo.** No secrets or tokens (run logs can capture them — redact),
-  no private internals from other projects. MIT.
+  no private internals from other projects — that includes internal roadmap
+  or phase references in code comments ported from elsewhere. MIT.
+- **Solo, local-first tool.** No accounts, no auth, no team/collaboration/
+  multiplayer features — no shared sessions, no live presence, no
+  multi-user chat. Sharing happens through committed artifacts. Never port
+  session/collab infrastructure from other projects; the server binds
+  127.0.0.1.
 - **Statistical honesty.** Stochastic claims state their N; "inconclusive" is
   a first-class verdict; mechanical graders before LLM judges.
 - Forward-only pre-launch: no migration/backfill/compat shims.

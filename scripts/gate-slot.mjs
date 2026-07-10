@@ -42,7 +42,7 @@ import { fileURLToPath } from 'node:url';
 export const DEFAULT_SLOT_DIR = path.join(os.tmpdir(), 'abl-gate-slot.lock');
 // Env stamp carrying the holder PID so a nested gate invocation inherits the
 // ancestor's slot instead of deadlocking on a second acquire.
-export const SLOT_ENV = 'TRINITY_GATE_SLOT';
+export const SLOT_ENV = 'ABL_GATE_SLOT';
 
 const POLL_MS = 2000;
 // A claim dir without a readable PID is normally a holder caught between the

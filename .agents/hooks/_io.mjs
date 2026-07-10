@@ -3,8 +3,8 @@
 // instead of branching per harness.
 //
 // Each hook in this directory exposes:
-//   1. A default-exported pure async function `(input) => Result` so
-//      Trinity-as-harness can `import` and call directly (no subprocess).
+//   1. A default-exported pure async function `(input) => Result` 
+//      an embedding harness can `import` and call directly (no subprocess).
 //   2. A CLI shim guarded by `isCLI(import.meta.url)` that reads stdin,
 //      invokes the function, and emits a harness-correct response. External
 //      harnesses (Claude Code, Codex CLI, Cursor) subprocess this path.
