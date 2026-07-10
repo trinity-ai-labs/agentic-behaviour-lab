@@ -2,8 +2,4 @@
 node_modules/
 *.tmp
 local/
-<<<<<<< HEAD
 dist/
-=======
-packages/*/dist/
->>>>>>> origin/main
