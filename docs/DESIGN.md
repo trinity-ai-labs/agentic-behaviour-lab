@@ -37,6 +37,12 @@ their surfaces, never the hue meaning):
 Verdicts are never color-only: each pairs with a glyph (✓ ✕ ◦ ‼) and a label.
 Chart categorical colors (model series, etc.) also draw from Okabe–Ito.
 
+**Shipped themes.** Two, per `THEMES.md` (the authoritative palettes):
+**Rime** (default; cold slate + frost blue + aurora violet) and **Ledger**
+(warm paper-and-ink; ink blue + ink violet). Verdict pips always carry a 1px
+`border`-toned ring (edge-contrast insurance where fill contrast dips on
+light surfaces), and never use the theme's danger/warning/success/info roles.
+
 **Scheme default.** Dark is the default (transcript- and log-reading product;
 `prefers-color-scheme` respected, manual override persisted). Light is an
 equal citizen — every token defined for both from day one, enforced (below).
