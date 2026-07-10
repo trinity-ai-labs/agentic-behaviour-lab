@@ -1,0 +1,35 @@
+{
+  "name": "@abl/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "stdio MCP server exposing the Agentic Behaviour Lab to agents: list scenarios, launch runs, poll status, fetch results.",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "abl-mcp": "./dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@abl/engine": "workspace:*",
+    "@effect/platform": "^0.96.2",
+    "@effect/platform-node": "^0.107.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "effect": "^3.21.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
