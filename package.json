@@ -11,6 +11,10 @@
   "scripts": {
     "build": "pnpm -r build",
     "check": "pnpm -r check",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "pre-commit": "pnpm check",
+    "gate": "pnpm build && pnpm check && pnpm test",
+    "gate:enqueue": "node scripts/enqueue-gate.mjs",
+    "gate:drain": "node scripts/gate-runner.mjs"
   }
 }
