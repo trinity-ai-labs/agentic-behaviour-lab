@@ -1,0 +1,14 @@
+{
+  "scenarioId": "scenario-min",
+  "version": "1",
+  "title": "Minimal marker-chain scenario (test fixture)",
+  "family": "test-fixture",
+  "description": "Exercises all four verdict outcomes via StubAdapter subject variants; used only by @abl/engine's own test suite and smoke script.",
+  "fixture": "fixture.mjs",
+  "grader": "grader.mjs",
+  "brief": "brief.md",
+  "conditions": [
+    { "label": "default", "params": { "style": "sequentially" } }
+  ],
+  "declaredShapes": ["one-shot"]
+}
