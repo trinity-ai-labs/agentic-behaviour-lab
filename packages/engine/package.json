@@ -1,0 +1,36 @@
+{
+  "name": "@abl/engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Effect-TS core for the Agentic Behaviour Lab: scenario loader, artifact store, trial runner, SQLite index.",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "smoke": "tsx examples/smoke.ts"
+  },
+  "dependencies": {
+    "@effect/platform": "^0.96.2",
+    "@effect/platform-node": "^0.107.0",
+    "better-sqlite3": "^12.11.1",
+    "effect": "^3.21.4"
+  },
+  "devDependencies": {
+    "@effect/vitest": "^0.29.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
