@@ -52,6 +52,22 @@ harness/        # shared trial-runner tooling (extracted as experiments repeat)
 docs/           # vision, scenario library seeds, methodology
 ```
 
+## MCP server
+
+`@abl/mcp` exposes the lab to agents over stdio — list scenarios, launch
+benchmark runs (fire-and-poll), and fetch results. Build once, then register
+it with Claude Code:
+
+```
+pnpm install && pnpm build
+claude mcp add abl -- node packages/mcp/dist/main.js
+```
+
+Runs execute in the background: `lab_run` returns a `runId` immediately, and
+the agent polls `lab_run_status` before reading `lab_results` /
+`lab_get_trial`. Scenario roots default to `./scenarios` and
+`~/.abl/scenarios` (override with `ABL_SCENARIO_ROOTS`).
+
 ## Contributing
 
 Experiment proposals, replications (contradictions especially), and harness
