@@ -1,4 +1,4 @@
-# Agentic Behaviour Lab
+# Agentic Behaviour Lab (`abl`)
 
 An open research lab for empirically characterizing how AI coding agents
 actually behave inside real development workflows — and which guardrails
@@ -13,7 +13,7 @@ orchestrator refuses an always-safe queue operation because a status line said
 like any other hypothesis — with controlled environments, multiple trials, and
 committed raw artifacts.
 
-That is what this repo does.
+That is what this repo does. Short handle: **abl** — the packages (`@abl/*`), the CLI surfaces, and the env vars (`ABL_*`) all use it.
 
 ## Method
 
