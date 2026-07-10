@@ -1,0 +1,14 @@
+{
+  "scenarioId": "mcp-min",
+  "version": "1",
+  "title": "Minimal marker scenario (mcp test fixture)",
+  "family": "test-fixture",
+  "description": "Two-marker chain driven by StubAdapter subjects; exercises the MCP tool loop end to end without spawning a real agent.",
+  "fixture": "fixture.mjs",
+  "grader": "grader.mjs",
+  "brief": "brief.md",
+  "conditions": [
+    { "label": "default", "params": { "style": "in order" } }
+  ],
+  "declaredShapes": ["one-shot"]
+}
