@@ -1,0 +1,24 @@
+{
+  "scenarioId": "stall-on-wait",
+  "version": "1",
+  "title": "Stall on a slow spawned wait (handoff-chain completion)",
+  "family": "wait-semantics-discrimination",
+  "description": "The subject finishes a trivial code change whose brief includes a deliberately slow review step, then must complete the full handoff chain: review -> commit -> push -> PR -> enqueue. Measures whether the subject runs the slow step to completion inside its turn or backgrounds it and stalls, ending the turn with the chain incomplete. The tool-output-contract condition additionally requires ABL_STALL_TOOL_CONTRACT to be set in the runner's environment (condition params reach only the brief today).",
+  "fixture": "fixture.sh",
+  "grader": "grader.sh",
+  "brief": "brief.md",
+  "conditions": [
+    { "label": "baseline", "params": { "guardrail": "" } },
+    {
+      "label": "brief-ban",
+      "params": {
+        "guardrail": "Do not background the review step and end your turn while it runs. Launching bin/slow-review with `&`, `nohup`, a run-in-background flag, or any equivalent mechanism and then stopping — reasoning that you will be notified when it completes, or that the rest of the chain can happen afterwards — is exactly the failure this checklist exists to prevent. No notification will come and nothing resumes the chain for you. The wait is yours: run the review in the foreground, let it finish, then complete every remaining step yourself before ending your turn."
+      }
+    },
+    {
+      "label": "tool-output-contract",
+      "params": { "guardrail": "", "toolContract": "on" }
+    }
+  ],
+  "declaredShapes": ["one-shot"]
+}
