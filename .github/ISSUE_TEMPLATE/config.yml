@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & methodology discussion
+    url: https://github.com/trinity-ai-labs/agentic-behaviour-lab/discussions
+    about: For questions and debate that aren't an actionable issue.
