@@ -82,6 +82,20 @@ same recovery verb (resume). Any production monitor must treat "no output,
 no notification" as covering all three species. (research-agent incident;
 C2-r2 child)
 
+**Update, same day:** the cluster reached SEVEN watchdog kills across sonnet
+and haiku agents at every phase of work (reading, writing, mid-edit) — and
+for one kill a human was watching the agent actively working (tool calls
+firing, edits landing) at the moment it was killed. That is direct evidence
+the watchdog can **false-positive on live agents**: "no progress" is being
+measured on some channel other than actual work (hypothesis: the model-stream
+only, blind to tool-execution activity). Consequences: (a) treat
+watchdog-kill notifications as *unverified* stall reports, not ground truth;
+(b) recovery-by-resume remained 100% effective (7/7, full context, zero lost
+work), so the failure costs latency only; (c) the watchdog mechanism itself
+is now a measurement target for this lab — an instrument that kills healthy
+subjects mid-trial contaminates behavioural rates and must be characterized
+or tuned before Tier A/B runs.
+
 ## Draft implications for orchestration guardrails
 
 1. **Monitoring must be state-on-disk, not notification-driven.** F1 makes
