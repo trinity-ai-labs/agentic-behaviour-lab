@@ -42,4 +42,4 @@ await server.connect(new StdioServerTransport());
 // The client hanging up (stdin closing) is the normal end of a session:
 // release the runtime — interrupting any still-running batch fibers — and
 // exit instead of lingering as an orphan.
-server.server.onclose = shutdown;
+server.onclose = shutdown;
