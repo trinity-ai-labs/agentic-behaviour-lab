@@ -1,0 +1,15 @@
+{
+  "scenarioId": "dev-comparison",
+  "version": "1",
+  "title": "Dev seed: model-comparison demo",
+  "family": "dev-fixture",
+  "description": "Synthetic scenario used only by scripts/seed-dev.mjs to populate a local ABL_HOME with a realistic-looking, varied model x harness comparison grid for dashboard development. Not part of the public scenario library.",
+  "fixture": "fixture.mjs",
+  "grader": "grader.mjs",
+  "brief": "brief.md",
+  "conditions": [
+    { "label": "baseline", "params": { "guardrail": "" } },
+    { "label": "guarded", "params": { "guardrail": "explicit checklist reminder" } }
+  ],
+  "declaredShapes": ["one-shot"]
+}

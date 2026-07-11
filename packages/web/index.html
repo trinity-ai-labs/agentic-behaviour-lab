@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-theme="rime" data-scheme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentic Behaviour Lab</title>
+    <script>
+      // Stamps data-theme/data-scheme before first paint so a persisted or
+      // OS-level preference never flashes the "rime dark" markup default set
+      // above. Kept inline (not a module) so it runs before the first frame;
+      // src/lib/theme.ts owns the same logic for in-app toggling.
+      ;(function () {
+        try {
+          var theme = localStorage.getItem("abl-theme") || "rime"
+          var scheme =
+            localStorage.getItem("abl-scheme") ||
+            (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
+          var root = document.documentElement
+          root.setAttribute("data-theme", theme)
+          root.setAttribute("data-scheme", scheme)
+        } catch (e) {
+          /* localStorage/matchMedia unavailable — the markup default stands. */
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

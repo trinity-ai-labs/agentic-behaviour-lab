@@ -4,22 +4,35 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "description": "SolidJS dashboard for the Agentic Behaviour Lab.",
+  "description": "SolidJS dashboard for the Agentic Behaviour Lab: scenario browser, run launcher, live trial pips, model-comparison benchmarks.",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "check": "tsc -p tsconfig.json"
+    "dev": "vite",
+    "build": "vite build",
+    "check": "tsc -p tsconfig.json --noEmit && node scripts/check-token-purity.mjs && node scripts/check-theme-matrix.mjs",
+    "test": "vitest run",
+    "seed-dev": "node scripts/seed-dev.mjs"
   },
   "dependencies": {
     "@abl/engine": "workspace:*",
     "@abl/server": "workspace:*",
     "@effect/platform": "^0.96.2",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@solidjs/router": "^0.15.4",
+    "@tanstack/solid-query": "^5.101.2",
     "effect": "^3.21.4",
-    "solid-js": "^1.9.9"
+    "solid-js": "^1.9.14"
   },
   "devDependencies": {
+    "@effect/platform-node": "^0.107.0",
     "@types/node": "^22.10.0",
-    "typescript": "^5.9.3"
+    "jsdom": "^25.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.6",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "^3.2.7"
   }
 }
