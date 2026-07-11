@@ -3,8 +3,9 @@
  * grid signature. Every rate shown carries its N; inconclusive and error
  * stay visible in every cell rather than being folded away.
  */
-import { createMemo, createSignal, For, Show } from "solid-js"
+import { createMemo, createSignal, Show } from "solid-js"
 import { ComparisonGrid } from "../components/ComparisonGrid"
+import { Select } from "../components/Select"
 import { VerdictLegend } from "../components/VerdictLegend"
 import { useResults } from "../query/hooks/results"
 import { useScenarios } from "../query/hooks/scenarios"
@@ -41,19 +42,14 @@ export const Benchmarks = () => {
       <Show when={scenariosQuery.data}>
         {(scenarios) => (
           <>
-            <label class={styles.picker}>
-              <span class={styles.pickerLabel}>Scenario</span>
-              <select
-                class={styles.select}
-                value={scenarioId()}
-                onChange={(e) => setScenarioId(e.currentTarget.value)}
-              >
-                <option value="" disabled>
-                  Choose a scenario…
-                </option>
-                <For each={scenarios()}>{(s) => <option value={s.scenarioId}>{s.title}</option>}</For>
-              </select>
-            </label>
+            <Select
+              class={styles.picker}
+              label="Scenario"
+              placeholder="Choose a scenario…"
+              value={scenarioId()}
+              onChange={setScenarioId}
+              options={scenarios().map((s) => ({ value: s.scenarioId, label: s.title }))}
+            />
 
             <Show when={scenario()}>
               {(s) => (
