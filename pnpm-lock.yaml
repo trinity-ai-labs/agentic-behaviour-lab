@@ -103,6 +103,15 @@ importers:
 
   packages/web:
     dependencies:
+      '@abl/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@abl/server':
+        specifier: workspace:*
+        version: link:../server
+      '@effect/platform':
+        specifier: ^0.96.2
+        version: 0.96.2(effect@3.21.4)
       '@fontsource/ibm-plex-mono':
         specifier: ^5.2.7
         version: 5.2.7
@@ -115,25 +124,19 @@ importers:
       '@tanstack/solid-query':
         specifier: ^5.101.2
         version: 5.101.2(solid-js@1.9.14)
+      effect:
+        specifier: ^3.21.4
+        version: 3.21.4
       solid-js:
         specifier: ^1.9.14
         version: 1.9.14
     devDependencies:
-      '@abl/engine':
-        specifier: workspace:*
-        version: link:../engine
-      '@abl/server':
-        specifier: workspace:*
-        version: link:../server
       '@effect/platform-node':
         specifier: ^0.107.0
         version: 0.107.0(@effect/cluster@0.59.0(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/workflow@0.18.2(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(@effect/rpc@0.75.1(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(@effect/platform@0.96.2(effect@3.21.4))(effect@3.21.4))(effect@3.21.4)
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
-      effect:
-        specifier: ^3.21.4
-        version: 3.21.4
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1

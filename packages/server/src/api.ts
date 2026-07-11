@@ -38,6 +38,26 @@ export class TrialNotFound extends Schema.TaggedError<TrialNotFound>()(
   HttpApiSchema.annotations({ status: 404 }),
 ) {}
 
+/** The authoring CLI call returned something that didn't decode as `AuthorResponse` — the tail lets a human see what actually came back. */
+export class AuthorFailed extends Schema.TaggedError<AuthorFailed>()(
+  "AuthorFailed",
+  { rawTail: Schema.String },
+  HttpApiSchema.annotations({ status: 502 }),
+) {}
+
+export class ScenarioSavePathRejected extends Schema.TaggedError<ScenarioSavePathRejected>()(
+  "ScenarioSavePathRejected",
+  { scenarioId: Schema.String, path: Schema.String, reason: Schema.String },
+  HttpApiSchema.annotations({ status: 400 }),
+) {}
+
+/** A saved draft didn't decode as a `ScenarioDefinition` (or a file it references is missing) — the caller edits the draft and re-saves. */
+export class ScenarioSaveInvalid extends Schema.TaggedError<ScenarioSaveInvalid>()(
+  "ScenarioSaveInvalid",
+  { scenarioId: Schema.String, reason: Schema.String },
+  HttpApiSchema.annotations({ status: 422 }),
+) {}
+
 // ---------------------------------------------------------------------------
 // Derived read-side views — computed from the flat-file store per request,
 // never stored anywhere.
@@ -129,9 +149,53 @@ const TrialsGroup = HttpApiGroup.make("trials").add(
   HttpApiEndpoint.get("get")`/trials/${trialIdParam}`.addSuccess(TrialDetail).addError(TrialNotFound),
 )
 
+// ---------------------------------------------------------------------------
+// Authoring — describe a behaviour in prose, get a drafted scenario back for
+// review, then save the reviewed draft into the local workspace.
+// ---------------------------------------------------------------------------
+
+/** One file of a drafted (or reviewed) scenario, keyed by path relative to the scenario directory. */
+export const AuthoredFile = Schema.Struct({ path: Schema.String, content: Schema.String })
+export type AuthoredFile = typeof AuthoredFile.Type
+
+export const AuthorRequest = Schema.Struct({
+  description: Schema.String,
+  notes: Schema.optional(Schema.String),
+})
+export type AuthorRequest = typeof AuthorRequest.Type
+
+/** Also the shape the authoring CLI's own output must decode as — see `authoring.ts`. */
+export const AuthorResponse = Schema.Struct({
+  files: Schema.Array(AuthoredFile),
+  rationale: Schema.String,
+})
+export type AuthorResponse = typeof AuthorResponse.Type
+
+export const SaveScenarioRequest = Schema.Struct({
+  scenarioId: Schema.String,
+  files: Schema.Array(AuthoredFile),
+})
+export type SaveScenarioRequest = typeof SaveScenarioRequest.Type
+
+const AuthoringGroup = HttpApiGroup.make("authoring")
+  .add(
+    HttpApiEndpoint.post("draft", "/author")
+      .setPayload(AuthorRequest)
+      .addSuccess(AuthorResponse)
+      .addError(AuthorFailed),
+  )
+  .add(
+    HttpApiEndpoint.post("save", "/scenarios/save")
+      .setPayload(SaveScenarioRequest)
+      .addSuccess(ScenarioDefinition)
+      .addError(ScenarioSavePathRejected)
+      .addError(ScenarioSaveInvalid),
+  )
+
 export const AblApi = HttpApi.make("abl")
   .add(ScenariosGroup)
   .add(RunsGroup)
   .add(ResultsGroup)
   .add(TrialsGroup)
+  .add(AuthoringGroup)
   .prefix("/api")

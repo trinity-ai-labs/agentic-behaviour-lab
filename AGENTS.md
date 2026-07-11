@@ -50,6 +50,12 @@ run artifacts live under `experiments/`.
 
 - Backend: TypeScript, Effect v3 (`effect`, `@effect/platform`) — invoke the
   `effect` skill before writing Effect code.
+- **Full Effect, no parallel schema vocabularies.** Effect `Schema` is the
+  only validation/serialization library; typed failures are `Data.TaggedError`
+  (or `Schema.TaggedError` on the wire) — never string-matched errors. Where a
+  third-party SDK demands its own schema format (e.g. MCP), GENERATE it from
+  the Effect contract (`JSONSchema.make`) rather than hand-writing a mirror,
+  and keep the Effect schema as the authoritative re-decode.
 - Frontend: SolidJS — invoke the `solid` skill before writing UI code.
 - Node >= 20, pnpm workspace. Strict TS (`tsconfig.base.json`).
 
