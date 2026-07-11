@@ -27,6 +27,7 @@ describe("ArtifactStore", () => {
           scenarioId: "scenario-min",
           conditions: ["default"],
           models: ["stub-complete"],
+          harnesses: ["claude-cli"],
           shape: "one-shot" as const,
           trialsPerCell: 1,
           maxConcurrent: 4,
