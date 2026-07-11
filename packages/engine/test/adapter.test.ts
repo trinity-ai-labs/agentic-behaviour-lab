@@ -3,7 +3,13 @@
 import { NodeContext } from '@effect/platform-node';
 import { describe, expect, it } from '@effect/vitest';
 import { Effect, Either, Layer } from 'effect';
-import { AdapterRegistry, AdapterRegistryLive, StubAdapterLive } from '../src/index.js';
+import {
+  AdapterRegistry,
+  AdapterRegistryLive,
+  AgentAdapter,
+  StubAdapterLive,
+} from '../src/index.js';
+import { stubScripts } from './support.js';
 
 describe('AdapterRegistry', () => {
   const registryLayer = AdapterRegistryLive({
@@ -31,5 +37,63 @@ describe('AdapterRegistry', () => {
         expect([...result.left.known].sort()).toEqual(['harness-a', 'harness-b']);
       }
     }).pipe(Effect.provide(registryLayer)),
+  );
+});
+
+describe('StubAdapter disposition', () => {
+  const adapterLayer = StubAdapterLive({
+    'stub-complete': stubScripts['stub-complete'],
+    'stub-provider-degraded': stubScripts['stub-provider-degraded'],
+    'stub-disposition-crashed': stubScripts['stub-disposition-crashed'],
+    'stub-disposition-timeout': stubScripts['stub-disposition-timeout'],
+  }).pipe(Layer.provide(NodeContext.layer));
+
+  it.effect('returns completed for a normal stub script', () =>
+    Effect.gen(function* () {
+      const adapter = yield* AgentAdapter;
+      const result = yield* adapter.run({
+        modelId: 'stub-complete',
+        brief: 'test',
+        workspaceDir: '/tmp',
+      });
+      expect(result.disposition).toBe('completed');
+      expect(result.finalMessage.length).toBeGreaterThan(0);
+    }).pipe(Effect.provide(adapterLayer)),
+  );
+
+  it.effect('returns provider-degraded when the script emits DISPOSITION:provider-degraded', () =>
+    Effect.gen(function* () {
+      const adapter = yield* AgentAdapter;
+      const result = yield* adapter.run({
+        modelId: 'stub-provider-degraded',
+        brief: 'test',
+        workspaceDir: '/tmp',
+      });
+      expect(result.disposition).toBe('provider-degraded');
+    }).pipe(Effect.provide(adapterLayer)),
+  );
+
+  it.effect('returns timeout when the script emits DISPOSITION:timeout', () =>
+    Effect.gen(function* () {
+      const adapter = yield* AgentAdapter;
+      const result = yield* adapter.run({
+        modelId: 'stub-disposition-timeout',
+        brief: 'test',
+        workspaceDir: '/tmp',
+      });
+      expect(result.disposition).toBe('timeout');
+    }).pipe(Effect.provide(adapterLayer)),
+  );
+
+  it.effect('returns crashed when the script emits DISPOSITION:crashed', () =>
+    Effect.gen(function* () {
+      const adapter = yield* AgentAdapter;
+      const result = yield* adapter.run({
+        modelId: 'stub-disposition-crashed',
+        brief: 'test',
+        workspaceDir: '/tmp',
+      });
+      expect(result.disposition).toBe('crashed');
+    }).pipe(Effect.provide(adapterLayer)),
   );
 });

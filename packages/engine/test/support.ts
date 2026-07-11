@@ -20,6 +20,9 @@ export const stubScripts = {
   'stub-partial': path.join(scenarioMinSubjects, 'partial.mjs'),
   'stub-poison': path.join(scenarioMinSubjects, 'poison.mjs'),
   'stub-noop': path.join(scenarioMinSubjects, 'noop.mjs'),
+  'stub-provider-degraded': path.join(scenarioMinSubjects, 'provider-degraded.mjs'),
+  'stub-disposition-timeout': path.join(scenarioMinSubjects, 'disposition-timeout.mjs'),
+  'stub-disposition-crashed': path.join(scenarioMinSubjects, 'disposition-crashed.mjs'),
 };
 
 /** A fresh ABL_HOME under the OS temp dir. Pair with `cleanupTempHome`. */
