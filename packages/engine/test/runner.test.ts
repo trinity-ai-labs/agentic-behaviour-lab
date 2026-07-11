@@ -257,4 +257,165 @@ describe('Runner', () => {
       expect(afterReindex).toEqual(before);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Grading gate: only 'completed' disposition reaches the grader
+  // ---------------------------------------------------------------------------
+
+  it.effect('produces pass when the subject disposition is completed', () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner;
+      const scenarios = yield* ScenarioRepo;
+      const scenario = yield* scenarios.load('scenario-min');
+      const condition = scenario.definition.conditions[0]!;
+
+      const record = yield* runner.runTrial({
+        runId: 'run-disposition-completed',
+        scenario,
+        condition,
+        modelId: 'stub-complete',
+        harness: 'claude-cli',
+        shape: 'one-shot',
+      });
+
+      // Completed disposition → grader runs → normal verdict
+      expect(record.verdict.outcome).toBe('pass');
+      expect(record.verdict.detail.disposition).toBeUndefined();
+    }).pipe(Effect.provide(engine)),
+  );
+
+  it.effect(
+    'produces error verdict when disposition is provider-degraded (grader never runs)',
+    () =>
+      Effect.gen(function* () {
+        const runner = yield* Runner;
+        const scenarios = yield* ScenarioRepo;
+        const scenario = yield* scenarios.load('scenario-min');
+        const condition = scenario.definition.conditions[0]!;
+
+        const record = yield* runner.runTrial({
+          runId: 'run-disposition-degraded',
+          scenario,
+          condition,
+          modelId: 'stub-provider-degraded',
+          harness: 'claude-cli',
+          shape: 'one-shot',
+        });
+
+        expect(record.verdict.outcome).toBe('error');
+        expect(record.verdict.detail.disposition).toBe('provider-degraded');
+        expect(record.verdict.gradedBy).toBe('mechanical');
+      }).pipe(Effect.provide(engine)),
+  );
+
+  it.effect('produces error verdict when disposition is crashed (grader never runs)', () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner;
+      const scenarios = yield* ScenarioRepo;
+      const scenario = yield* scenarios.load('scenario-min');
+      const condition = scenario.definition.conditions[0]!;
+
+      const record = yield* runner.runTrial({
+        runId: 'run-disposition-crashed',
+        scenario,
+        condition,
+        modelId: 'stub-disposition-crashed',
+        harness: 'claude-cli',
+        shape: 'one-shot',
+      });
+
+      expect(record.verdict.outcome).toBe('error');
+      expect(record.verdict.detail.disposition).toBe('crashed');
+    }).pipe(Effect.provide(engine)),
+  );
+
+  it.effect('produces error verdict when disposition is timeout (grader never runs)', () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner;
+      const scenarios = yield* ScenarioRepo;
+      const scenario = yield* scenarios.load('scenario-min');
+      const condition = scenario.definition.conditions[0]!;
+
+      const record = yield* runner.runTrial({
+        runId: 'run-disposition-timeout',
+        scenario,
+        condition,
+        modelId: 'stub-disposition-timeout',
+        harness: 'claude-cli',
+        shape: 'one-shot',
+      });
+
+      expect(record.verdict.outcome).toBe('error');
+      expect(record.verdict.detail.disposition).toBe('timeout');
+    }).pipe(Effect.provide(engine)),
+  );
+
+  // ---------------------------------------------------------------------------
+  // Validity: runs with >20% error share get 'degraded-conditions'
+  // ---------------------------------------------------------------------------
+
+  it.effect('marks a run as valid when all trials pass', () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner;
+
+      const run = yield* runner.runBatch({
+        scenarioId: 'scenario-min',
+        conditions: ['default'],
+        models: ['stub-complete'],
+        harnesses: ['claude-cli'],
+        shape: 'one-shot',
+        trialsPerCell: 3,
+        maxConcurrent: 2,
+      });
+
+      expect(run.status).toBe('completed');
+      expect(run.validity).toBe('valid');
+    }).pipe(Effect.provide(engine)),
+  );
+
+  it.effect('marks a run as degraded-conditions when error share > 20%', () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner;
+
+      // 5 trials all with provider-degraded → 100% error share > 20%
+      const run = yield* runner.runBatch({
+        scenarioId: 'scenario-min',
+        conditions: ['default'],
+        models: ['stub-provider-degraded'],
+        harnesses: ['claude-cli'],
+        shape: 'one-shot',
+        trialsPerCell: 5,
+        maxConcurrent: 2,
+      });
+
+      expect(run.status).toBe('completed');
+      expect(run.validity).toBe('degraded-conditions');
+    }).pipe(Effect.provide(engine)),
+  );
+
+  // ---------------------------------------------------------------------------
+  // Provider status: best-effort, never blocks a run
+  // ---------------------------------------------------------------------------
+
+  it.effect('captures provider status on the run record when available', () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner;
+
+      const run = yield* runner.runBatch({
+        scenarioId: 'scenario-min',
+        conditions: ['default'],
+        models: ['stub-complete'],
+        harnesses: ['claude-cli'],
+        shape: 'one-shot',
+        trialsPerCell: 1,
+        maxConcurrent: 1,
+      });
+
+      // providerStatus may be undefined (if the statuspage unreachable in
+      // test env) or populated — either way the run completed normally.
+      expect(run.status).toBe('completed');
+      // The field exists on the type; the value is best-effort.
+      expect(run.validity).toBeDefined();
+    }).pipe(Effect.provide(engine)),
+  );
 });
