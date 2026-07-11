@@ -59,6 +59,7 @@ export interface TrialProgress {
   readonly trialId: string
   readonly condition: string
   readonly modelId: string
+  readonly harness: string
   readonly outcome: VerdictOutcome
 }
 
@@ -149,13 +150,18 @@ export const makeRunRegistry = (): RunRegistry => {
 
       return {
         run: batchError !== undefined ? { ...run, status: "aborted" as const } : run,
-        plannedTrials: run.config.conditions.length * run.config.models.length * run.config.trialsPerCell,
+        plannedTrials:
+          run.config.conditions.length *
+          run.config.models.length *
+          run.config.harnesses.length *
+          run.config.trialsPerCell,
         completedTrials: trials.length,
         cells: summarizeCells(trials),
         trials: trials.map((trial) => ({
           trialId: trial.trialId,
           condition: trial.condition.label,
           modelId: trial.fingerprint.modelId,
+          harness: trial.fingerprint.harness,
           outcome: trial.verdict.outcome,
         })),
         batchError,
@@ -174,6 +180,8 @@ export interface ResultsFilter {
   readonly runId?: string | undefined
   readonly models?: ReadonlyArray<string> | undefined
   readonly conditions?: ReadonlyArray<string> | undefined
+  /** Fingerprint harness strings (as reported in cell rows), e.g. "claude-code/2.1.206 (headless -p)". */
+  readonly harnesses?: ReadonlyArray<string> | undefined
 }
 
 /**
@@ -200,7 +208,8 @@ export const results = (
       (cell) =>
         (filter.scenarioId === undefined || cell.scenarioId === filter.scenarioId) &&
         (filter.models === undefined || filter.models.includes(cell.modelId)) &&
-        (filter.conditions === undefined || filter.conditions.includes(cell.condition)),
+        (filter.conditions === undefined || filter.conditions.includes(cell.condition)) &&
+        (filter.harnesses === undefined || filter.harnesses.includes(cell.harness)),
     )
   })
 
@@ -301,6 +310,7 @@ interface CellAccumulator {
   readonly scenarioId: string
   readonly condition: string
   readonly modelId: string
+  readonly harness: string
   readonly shape: ExecutionShape
   pass: number
   fail: number
@@ -317,13 +327,14 @@ interface CellAccumulator {
 const summarizeCells = (trials: ReadonlyArray<TrialRecord>): Array<CellSummary> => {
   const cells = new Map<string, CellAccumulator>()
   for (const trial of trials) {
-    const key = `${trial.scenarioId} ${trial.condition.label} ${trial.fingerprint.modelId} ${trial.shape}`
+    const key = `${trial.scenarioId} ${trial.condition.label} ${trial.fingerprint.modelId} ${trial.fingerprint.harness} ${trial.shape}`
     let cell = cells.get(key)
     if (cell === undefined) {
       cell = {
         scenarioId: trial.scenarioId,
         condition: trial.condition.label,
         modelId: trial.fingerprint.modelId,
+        harness: trial.fingerprint.harness,
         shape: trial.shape,
         pass: 0,
         fail: 0,
@@ -335,7 +346,7 @@ const summarizeCells = (trials: ReadonlyArray<TrialRecord>): Array<CellSummary> 
     cell[trial.verdict.outcome] += 1
   }
   const sortKey = (cell: CellAccumulator): string =>
-    `${cell.scenarioId} ${cell.condition} ${cell.modelId} ${cell.shape}`
+    `${cell.scenarioId} ${cell.condition} ${cell.modelId} ${cell.harness} ${cell.shape}`
   return [...cells.values()]
     .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
     .map(

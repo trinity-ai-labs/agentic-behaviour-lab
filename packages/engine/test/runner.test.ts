@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { rmSync } from "node:fs"
 import path from "node:path"
 import { ArtifactStore, Runner, ScenarioRepo, TrialIndex } from "../src/index.js"
-import { cleanupTempHome, makeTempHome, stubEngine } from "./support.js"
+import { cleanupTempHome, makeTempHome, stubEngine, stubHarnessIds, stubMultiHarnessEngine } from "./support.js"
 
 describe("Runner", () => {
   let home: string
@@ -30,6 +30,7 @@ describe("Runner", () => {
         scenario,
         condition,
         modelId: "stub-complete",
+        harness: "claude-cli",
         shape: "one-shot",
       })
 
@@ -58,6 +59,7 @@ describe("Runner", () => {
         scenario,
         condition,
         modelId: "stub-partial",
+        harness: "claude-cli",
         shape: "one-shot",
       })
 
@@ -78,6 +80,7 @@ describe("Runner", () => {
         scenario,
         condition,
         modelId: "stub-poison",
+        harness: "claude-cli",
         shape: "one-shot",
       })
 
@@ -99,6 +102,7 @@ describe("Runner", () => {
         scenario,
         condition,
         modelId: "stub-noop",
+        harness: "claude-cli",
         shape: "one-shot",
       })
 
@@ -116,6 +120,7 @@ describe("Runner", () => {
         scenarioId: "scenario-min",
         conditions: ["default"],
         models: ["stub-complete", "stub-partial"],
+        harnesses: ["claude-cli"],
         shape: "one-shot",
         trialsPerCell: 2,
         maxConcurrent: 2,
@@ -129,6 +134,52 @@ describe("Runner", () => {
     }).pipe(Effect.provide(engine)),
   )
 
+  it.effect("runBatch fans across harnesses: trials differ only in fingerprint.harness", () =>
+    Effect.gen(function* () {
+      const runner = yield* Runner
+      const store = yield* ArtifactStore
+      const index = yield* TrialIndex
+
+      const run = yield* runner.runBatch({
+        scenarioId: "scenario-min",
+        conditions: ["default"],
+        models: ["stub-complete"],
+        harnesses: ["stub-harness-a", "stub-harness-b"],
+        shape: "one-shot",
+        trialsPerCell: 1,
+        maxConcurrent: 2,
+      })
+
+      expect(run.status).toBe("completed")
+
+      const trialIds = yield* store.listTrialIds(run.runId)
+      expect(trialIds).toHaveLength(2) // 1 condition x 1 model x 2 harnesses x 1 trial
+      const trials = yield* Effect.forEach(trialIds, (trialId) => store.readTrial(run.runId, trialId))
+
+      const harnesses = trials.map((trial) => trial.fingerprint.harness).sort()
+      expect(harnesses).toEqual([stubHarnessIds["stub-harness-a"], stubHarnessIds["stub-harness-b"]].sort())
+
+      // Everything but the harness is identical across the two trials.
+      for (const trial of trials) {
+        expect(trial.condition).toEqual({ label: "default", params: { style: "sequentially" } })
+        expect(trial.fingerprint.modelId).toBe("stub-complete")
+        expect(trial.verdict.outcome).toBe("pass")
+      }
+
+      // Cells split per harness, and the filter narrows to one of them.
+      const allCells = yield* index.cellSummaries()
+      expect(allCells).toHaveLength(2)
+      const onlyA = yield* index.cellSummaries({ harness: stubHarnessIds["stub-harness-a"] })
+      expect(onlyA).toHaveLength(1)
+      expect(onlyA[0]).toMatchObject({
+        harness: stubHarnessIds["stub-harness-a"],
+        modelId: "stub-complete",
+        trials: 1,
+        pass: 1,
+      })
+    }).pipe(Effect.provide(stubMultiHarnessEngine(home))),
+  )
+
   it.effect("runBatch fails fast on an unknown condition", () =>
     Effect.gen(function* () {
       const runner = yield* Runner
@@ -137,6 +188,7 @@ describe("Runner", () => {
           scenarioId: "scenario-min",
           conditions: ["does-not-exist"],
           models: ["stub-complete"],
+          harnesses: ["claude-cli"],
           shape: "one-shot",
           trialsPerCell: 1,
           maxConcurrent: 1,
@@ -160,6 +212,7 @@ describe("Runner", () => {
         scenarioId: "scenario-min",
         conditions: ["default"],
         models: ["stub-complete", "stub-partial", "stub-poison", "stub-noop"],
+        harnesses: ["claude-cli"],
         shape: "one-shot",
         trialsPerCell: 1,
         maxConcurrent: 4,

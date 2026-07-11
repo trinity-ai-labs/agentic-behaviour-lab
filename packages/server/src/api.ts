@@ -115,6 +115,8 @@ const ResultsGroup = HttpApiGroup.make("results")
           scenarioId: Schema.optional(Schema.String),
           model: Schema.optional(Schema.String),
           condition: Schema.optional(Schema.String),
+          /** Exact fingerprint harness string as reported in cell rows. */
+          harness: Schema.optional(Schema.String),
         }),
       )
       .addSuccess(Schema.Array(CellSummary)),

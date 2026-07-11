@@ -27,9 +27,10 @@ const nowIso = (): string => new Date().toISOString()
 interface Cell {
   readonly condition: RunTrialParams["condition"]
   readonly modelId: string
+  readonly harness: string
 }
 
-/** Every (condition × model × trial-index) the config promises — one entry per trial to run. */
+/** Every (condition × model × harness × trial-index) the config promises — one entry per trial to run. */
 const deriveCells = (
   scenario: LoadedScenario,
   config: RunConfig,
@@ -48,7 +49,9 @@ const deriveCells = (
       // Safe: every label in config.conditions was validated against byLabel above.
       const condition = byLabel.get(label)!
       return config.models.flatMap((modelId) =>
-        Array.from({ length: config.trialsPerCell }, () => ({ condition, modelId })),
+        config.harnesses.flatMap((harness) =>
+          Array.from({ length: config.trialsPerCell }, () => ({ condition, modelId, harness })),
+        ),
       )
     }),
   )
@@ -81,7 +84,8 @@ export const launchRun = (
 
     const batch = Effect.forEach(
       cells,
-      ({ condition, modelId }) => runner.runTrial({ runId, scenario, condition, modelId, shape: config.shape }),
+      ({ condition, modelId, harness }) =>
+        runner.runTrial({ runId, scenario, condition, modelId, harness, shape: config.shape }),
       { concurrency: config.maxConcurrent, discard: true },
     ).pipe(
       Effect.matchCauseEffect({

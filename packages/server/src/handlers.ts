@@ -62,7 +62,10 @@ const RunsLive = HttpApiBuilder.group(AblApi, "runs", (handlers) =>
             return {
               condition,
               modelId,
-              expectedTrials: run.config.trialsPerCell,
+              // Trials from every requested harness land in this
+              // (condition, model) cell, and the config promises
+              // trialsPerCell for each one.
+              expectedTrials: run.config.trialsPerCell * run.config.harnesses.length,
               trialIds: inCell.map((trial) => trial.trialId),
               pass: outcomeCount(inCell, "pass"),
               fail: outcomeCount(inCell, "fail"),
@@ -87,9 +90,10 @@ const ResultsLive = HttpApiBuilder.group(AblApi, "results", (handlers) =>
     const index = yield* TrialIndex
     return handlers
       .handle("list", ({ urlParams }) => {
-        // The index only filters by scenario; model/condition narrow the few
-        // returned cells in memory (the engine's CellFilter has no such axes).
-        const filter: CellFilter = urlParams.scenarioId === undefined ? {} : { scenarioId: urlParams.scenarioId }
+        // scenario/harness push down into the index query; model/condition
+        // narrow the few returned cells in memory (the engine's CellFilter
+        // has no such axes).
+        const filter: CellFilter = { scenarioId: urlParams.scenarioId, harness: urlParams.harness }
         return index.cellSummaries(filter).pipe(
           Effect.map((cells) =>
             cells.filter(

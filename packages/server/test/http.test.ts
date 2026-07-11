@@ -23,10 +23,12 @@ const serverLayer = (ablHome: string) =>
       EngineLive({
         ablHome,
         scenarioRoots: [fixturesRoot],
-        adapter: StubAdapterLive({
-          "stub-complete": path.join(subjectsDir, "complete.mjs"),
-          "stub-partial": path.join(subjectsDir, "partial.mjs"),
-        }),
+        adapters: {
+          "claude-cli": StubAdapterLive({
+            "stub-complete": path.join(subjectsDir, "complete.mjs"),
+            "stub-partial": path.join(subjectsDir, "partial.mjs"),
+          }),
+        },
       }),
     ),
     // layerTest binds a real Node server to an ephemeral 127.0.0.1 port and
@@ -69,6 +71,7 @@ describe("@abl/server HTTP API", () => {
               scenarioId: "scenario-min",
               conditions: ["does-not-exist"],
               models: ["stub-complete"],
+              harnesses: ["claude-cli"],
               shape: "one-shot",
               trialsPerCell: 1,
               maxConcurrent: 1,
@@ -83,6 +86,7 @@ describe("@abl/server HTTP API", () => {
               scenarioId: "no-such-scenario",
               conditions: ["default"],
               models: ["stub-complete"],
+              harnesses: ["claude-cli"],
               shape: "one-shot",
               trialsPerCell: 1,
               maxConcurrent: 1,
@@ -97,6 +101,7 @@ describe("@abl/server HTTP API", () => {
             scenarioId: "scenario-min",
             conditions: ["default"],
             models: ["stub-complete", "stub-partial"],
+            harnesses: ["claude-cli"],
             shape: "one-shot",
             trialsPerCell: 2,
             maxConcurrent: 2,

@@ -99,13 +99,17 @@ export const makeLabServer = (runtime: LabRuntime): McpServer => {
     {
       title: "Launch a benchmark run",
       description:
-        "Starts a batch: one scenario fanned across conditions x models, N trials per (condition x model) cell. Returns {runId} immediately — the batch runs in the background; poll lab_run_status.",
+        "Starts a batch: one scenario fanned across conditions x models x harnesses, N trials per (condition x model x harness) cell. Returns {runId} immediately — the batch runs in the background; poll lab_run_status.",
       inputSchema: {
         scenarioId: z.string().describe("Scenario id (see lab_list_scenarios)"),
         conditions: z.array(z.string()).describe("Condition labels declared by the scenario"),
         models: z.array(z.string()).describe("Model ids to compare"),
+        harnesses: z
+          .array(z.string())
+          .optional()
+          .describe('Harness ids to compare: "claude-cli" and/or "codex-cli" (default ["claude-cli"])'),
         shape: shapeEnum.describe("Execution shape to run under"),
-        trialsPerCell: z.number().int().min(1).describe("Trials per condition x model cell"),
+        trialsPerCell: z.number().int().min(1).describe("Trials per condition x model x harness cell"),
         maxConcurrent: z.number().int().min(1).optional().describe("Cap on concurrently running trials (default 4)"),
       },
     },
@@ -130,12 +134,16 @@ export const makeLabServer = (runtime: LabRuntime): McpServer => {
     {
       title: "Query cell summaries",
       description:
-        "Aggregated outcome counts per (scenario, condition, model, shape) cell — the model-comparison payload. All filters optional; failRate is fail/(pass+fail), null until graded trials exist.",
+        "Aggregated outcome counts per (scenario, condition, model, harness, shape) cell — the model/harness-comparison payload. All filters optional; failRate is fail/(pass+fail), null until graded trials exist.",
       inputSchema: {
         scenarioId: z.string().optional(),
         runId: z.string().optional().describe("Restrict to one run (aggregated from its trial files)"),
         models: z.array(z.string()).optional(),
         conditions: z.array(z.string()).optional(),
+        harnesses: z
+          .array(z.string())
+          .optional()
+          .describe('Fingerprint harness strings as reported in cells, e.g. "claude-code/2.1.206 (headless -p)"'),
       },
     },
     (args) => runTool(runtime, Lab.results(args)),
