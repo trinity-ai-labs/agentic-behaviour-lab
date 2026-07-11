@@ -1,0 +1,74 @@
+/**
+ * Layer 1 — primitives: raw, theme-agnostic material (docs/DESIGN.md's
+ * "three layers"). Two kinds live here, policed differently:
+ *
+ * - Color ramps (`--prim-*`): reserved for AUTHORING theme files
+ *   (tokens/themes/*.css) only. scripts/check-token-purity.mjs fails the
+ *   build if any file under src/ outside tokens/ references a `--prim-*`
+ *   custom property or a raw hex/oklch() literal — that is the enforcement
+ *   DESIGN.md calls for ("no raw color, no primitives in components").
+ * - Geometry and typography (`--space-*`, `--radius-*`, `--text-*`,
+ *   `--font-*`): NOT color, identical regardless of theme or scheme, and
+ *   meant for direct component use — the purity script only polices color,
+ *   because color is the axis themes vary and geometry/type are not.
+ *
+ * `:root` carries this raw material but — per DESIGN.md — never a semantic
+ * color role: role→color mappings live exclusively in the
+ * `[data-theme][data-scheme]` blocks of tokens/themes/*.css, so there is no
+ * "invisible default theme" hiding in `:root`.
+ */
+
+:root {
+  /* ---- reserved neutral ramp (Layer 1 color material for theme authors) ---- */
+  --prim-neutral-0: oklch(12% 0.01 260);
+  --prim-neutral-1: oklch(18% 0.014 260);
+  --prim-neutral-2: oklch(24% 0.018 260);
+  --prim-neutral-3: oklch(32% 0.02 260);
+  --prim-neutral-4: oklch(42% 0.022 260);
+  --prim-neutral-5: oklch(52% 0.024 260);
+  --prim-neutral-6: oklch(62% 0.022 260);
+  --prim-neutral-7: oklch(72% 0.018 260);
+  --prim-neutral-8: oklch(82% 0.014 260);
+  --prim-neutral-9: oklch(90% 0.01 260);
+  --prim-neutral-10: oklch(95% 0.006 260);
+  --prim-neutral-11: oklch(98% 0.003 260);
+  --prim-neutral-12: oklch(100% 0 0);
+
+  /* ---- spacing scale ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* ---- radii ---- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 999px;
+
+  /* ---- type scale ---- */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.75rem;
+
+  /* ---- font stacks: IBM Plex Sans (UI/prose) + IBM Plex Mono (all data) ---- */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* `color-scheme` follows the scheme axis so native controls (scrollbars,
+   form widgets) render correctly regardless of which theme is active. */
+[data-scheme="dark"] {
+  color-scheme: dark;
+}
+[data-scheme="light"] {
+  color-scheme: light;
+}
