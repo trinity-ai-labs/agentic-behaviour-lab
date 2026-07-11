@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * `abl-mcp` entrypoint: one ManagedRuntime carrying the composed engine
- * (real Claude CLI adapter) is built at startup and shared by every tool
- * handler; the MCP server speaks the stdio transport. stdout belongs to the
- * protocol, so all Effect logging is rerouted to stderr — a single stray
- * stdout line would corrupt the JSON-RPC stream.
+ * (real Claude Code + Codex CLI adapters) is built at startup and shared by
+ * every tool handler; the MCP server speaks the stdio transport. stdout
+ * belongs to the protocol, so all Effect logging is rerouted to stderr — a
+ * single stray stdout line would corrupt the JSON-RPC stream.
  */
-import { ClaudeCliAdapterLive, defaultAblHome, EngineLive } from "@abl/engine"
+import { cliAdapters, defaultAblHome, EngineLive } from "@abl/engine"
 import { NodeContext } from "@effect/platform-node"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { Layer, Logger, ManagedRuntime } from "effect"
@@ -17,7 +17,7 @@ const ablHome = defaultAblHome()
 const scenarioRoots = resolveScenarioRoots(process.env.ABL_SCENARIO_ROOTS, process.cwd(), ablHome)
 
 const runtime = ManagedRuntime.make(
-  EngineLive({ ablHome, scenarioRoots, adapter: ClaudeCliAdapterLive }).pipe(
+  EngineLive({ ablHome, scenarioRoots, adapters: cliAdapters }).pipe(
     Layer.provideMerge(NodeContext.layer),
     Layer.merge(Logger.replace(Logger.defaultLogger, Logger.prettyLogger({ stderr: true, colors: false }))),
   ),
