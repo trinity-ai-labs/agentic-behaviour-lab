@@ -113,3 +113,11 @@ or tuned before Tier A/B runs.
    ("you will be notified") should be qualified inside sub-agent contexts —
    and our own queue tooling should print the contract at the moment of
    decision. (Rate experiments for this are Tier A/B, next.)
+
+**Same-day addendum:** during the cluster (user-confirmed across multiple
+independent sessions), the provider status page reported *All Systems
+Operational* with no unresolved incidents — self-reported provider health
+does not detect the stream-level degradation that kills agents. Validity
+instrumentation must be built on observed per-trial signals (typed failure
+dispositions, latency, retries), with status feeds as annotation only. (#14
+tracks the implementation.)
