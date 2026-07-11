@@ -15,16 +15,18 @@ import {
 } from "@abl/engine"
 import { Effect, Layer, Option } from "effect"
 import { AblApi, INLINE_ARTIFACT_LIMIT, RunNotFound, TrialNotFound, type CellProgress } from "./api.js"
+import { AuthoringLive } from "./authoring.js"
 import { launchRun } from "./run-launch.js"
 
-const ScenariosLive = HttpApiBuilder.group(AblApi, "scenarios", (handlers) =>
+/** Exported (alongside the other groups below) so tests can compose a custom `HttpApi.Api` around a non-default `AuthoringLive` — see `test/authoring.test.ts`. */
+export const ScenariosLive = HttpApiBuilder.group(AblApi, "scenarios", (handlers) =>
   Effect.gen(function* () {
     const scenarios = yield* ScenarioRepo
     return handlers.handle("list", () => scenarios.list.pipe(Effect.orDie))
   }),
 )
 
-const RunsLive = HttpApiBuilder.group(AblApi, "runs", (handlers) =>
+export const RunsLive = HttpApiBuilder.group(AblApi, "runs", (handlers) =>
   Effect.gen(function* () {
     const store = yield* ArtifactStore
 
@@ -85,7 +87,7 @@ const RunsLive = HttpApiBuilder.group(AblApi, "runs", (handlers) =>
   }),
 )
 
-const ResultsLive = HttpApiBuilder.group(AblApi, "results", (handlers) =>
+export const ResultsLive = HttpApiBuilder.group(AblApi, "results", (handlers) =>
   Effect.gen(function* () {
     const index = yield* TrialIndex
     return handlers
@@ -109,7 +111,7 @@ const ResultsLive = HttpApiBuilder.group(AblApi, "results", (handlers) =>
   }),
 )
 
-const TrialsLive = HttpApiBuilder.group(AblApi, "trials", (handlers) =>
+export const TrialsLive = HttpApiBuilder.group(AblApi, "trials", (handlers) =>
   Effect.gen(function* () {
     const store = yield* ArtifactStore
     const fs = yield* FileSystem.FileSystem
@@ -163,7 +165,7 @@ const TrialsLive = HttpApiBuilder.group(AblApi, "trials", (handlers) =>
   }),
 )
 
-/** The whole API, ready to serve — requires the engine plus FileSystem/Path. */
+/** The whole API, ready to serve — requires the engine plus FileSystem/Path/CommandExecutor. */
 export const ApiLive = HttpApiBuilder.api(AblApi).pipe(
-  Layer.provide([ScenariosLive, RunsLive, ResultsLive, TrialsLive]),
+  Layer.provide([ScenariosLive, RunsLive, ResultsLive, TrialsLive, AuthoringLive()]),
 )

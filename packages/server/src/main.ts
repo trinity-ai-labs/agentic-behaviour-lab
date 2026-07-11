@@ -4,6 +4,13 @@
  * the dashboard (from `packages/web/dist`, once built). Wires the engine a
  * single time with the real Claude Code + Codex CLI adapters; trials started
  * over HTTP run in this process.
+ *
+ * The authoring endpoints (`POST /api/author`, `POST /api/scenarios/save`)
+ * need no wiring here — `ApiLive` (`handlers.ts`) already bundles the
+ * "authoring" group with production defaults: the real `claude` CLI (model
+ * overridable via `ABL_AUTHOR_MODEL`, default `claude-sonnet-5`) and
+ * `$ABL_HOME/scenarios` as the save target, matching the scenario root this
+ * module puts first in `scenarioRoots()` below.
  */
 import { HttpApiBuilder, HttpServer } from "@effect/platform"
 import { NodeContext, NodeHttpServer, NodeRuntime } from "@effect/platform-node"
