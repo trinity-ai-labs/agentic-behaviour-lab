@@ -31,7 +31,27 @@ export const stubEngine = (ablHome: string) =>
   EngineLive({
     ablHome,
     scenarioRoots: [fixturesRoot],
-    adapter: StubAdapterLive(stubScripts),
+    adapters: { "claude-cli": StubAdapterLive(stubScripts) },
+  }).pipe(Layer.provide(NodeContext.layer))
+
+/**
+ * Two distinct stub harnesses registered under different ids, each reporting
+ * its own harnessId — for tests proving a run fans across harnesses (trials
+ * differ only in fingerprint.harness), independent of the model axis.
+ */
+export const stubHarnessIds = {
+  "stub-harness-a": "stub-cli-a/1.0 (test)",
+  "stub-harness-b": "stub-cli-b/2.0 (test)",
+} as const
+
+export const stubMultiHarnessEngine = (ablHome: string) =>
+  EngineLive({
+    ablHome,
+    scenarioRoots: [fixturesRoot],
+    adapters: {
+      "stub-harness-a": StubAdapterLive(stubScripts, stubHarnessIds["stub-harness-a"]),
+      "stub-harness-b": StubAdapterLive(stubScripts, stubHarnessIds["stub-harness-b"]),
+    },
   }).pipe(Layer.provide(NodeContext.layer))
 
 /** A fully-populated TrialRecord for store/index tests; override what a test cares about. */

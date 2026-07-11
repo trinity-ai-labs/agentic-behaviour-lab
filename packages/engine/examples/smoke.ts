@@ -23,6 +23,7 @@ const program = Effect.gen(function* () {
     scenarioId: "scenario-min",
     conditions: ["default"],
     models: ["stub-complete", "stub-partial", "stub-poison", "stub-noop"],
+    harnesses: ["claude-cli"],
     shape: "one-shot",
     trialsPerCell: 2,
     maxConcurrent: 4,
