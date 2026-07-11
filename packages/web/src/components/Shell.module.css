@@ -45,17 +45,30 @@
   color: var(--muted);
 }
 
-/* --input reads as a filled control in BOTH schemes (darker than --surface on
-   light, lighter on dark), unlike --elevated which is pure white on the light
-   schemes and so vanished against the near-white header. */
+/* Light schemes: subtle --input fill (reads as a filled control in both
+   schemes, unlike --elevated which is pure white on light and vanishes against
+   the near-white header). */
 .navLink:hover {
   color: var(--foreground);
   background: var(--input);
 }
 
-.navLinkActive {
-  color: var(--primary);
-  background: var(--input);
+/* Dark schemes: the violet --accent fill reads better than the muted --input
+   here. Scoped to non-active tabs so the active tab keeps its --primary fill
+   even while hovered. */
+[data-scheme="dark"] .navLink:not(.navLinkActive):hover {
+  color: var(--on-primary);
+  background: var(--accent);
+}
+
+/* Active tab is the filled/primary state: --primary bg with --on-primary text
+   (both flip per theme AND per light/dark scheme, so contrast holds everywhere).
+   The :hover pairing keeps it primary — the subtle --input hover must not win
+   over the active tab when the pointer is on it. */
+.navLinkActive,
+.navLinkActive:hover {
+  color: var(--on-primary);
+  background: var(--primary);
   font-weight: 600;
 }
 
