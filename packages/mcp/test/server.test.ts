@@ -119,6 +119,29 @@ describe('@abl/mcp server', () => {
     expect(finalMessage.truncated).toBe(false);
   }, 60_000);
 
+  it('advertises lab_run inputSchema as complete JSON Schema from the Effect contract', async () => {
+    const { tools } = await client.listTools({});
+    const labRun = tools.find((t) => t.name === 'lab_run');
+    expect(labRun).toBeDefined();
+    const schema = labRun!.inputSchema;
+    expect(schema.type).toBe('object');
+    // Every RunConfig field must appear; the generated schema is never an
+    // empty placeholder.
+    expect(schema.properties).toHaveProperty('scenarioId');
+    expect(schema.properties).toHaveProperty('conditions');
+    expect(schema.properties).toHaveProperty('models');
+    expect(schema.properties).toHaveProperty('harnesses');
+    expect(schema.properties).toHaveProperty('shape');
+    expect(schema.properties).toHaveProperty('trialsPerCell');
+    expect(schema.properties).toHaveProperty('maxConcurrent');
+    expect(schema.required).toEqual(
+      expect.arrayContaining(['scenarioId', 'conditions', 'models', 'shape', 'trialsPerCell']),
+    );
+    // Optional fields (harnesses, maxConcurrent) must NOT be required.
+    expect(schema.required).not.toContain('harnesses');
+    expect(schema.required).not.toContain('maxConcurrent');
+  });
+
   it('surfaces an unknown scenario as an isError result, not a hang', async () => {
     const result = await client.callTool({
       name: 'lab_run',
