@@ -1,0 +1,77 @@
+/**
+ * Layer 2 — semantic tokens, theme "Rime" (default). Palette implemented
+ * VERBATIM from docs/THEMES.md's Rime table (oklch column). Exactly two
+ * blocks, light + dark twins, each mapping the full canonical role
+ * vocabulary — nothing here is computed, everything is copied from the
+ * authoritative table so the two never drift.
+ *
+ * verdict-pass/fail/inconclusive/error are FIXED across every theme and
+ * scheme (docs/DESIGN.md: "fixed hues across ALL themes") — the same four
+ * oklch values, derived once from the Okabe-Ito anchors, repeated in every
+ * block below rather than varied per surface. verdict-ring is the one
+ * verdict-adjacent token that DOES vary here: computed contrast (see the PR
+ * description) shows the theme's own `border` role clears the 1px ring
+ * against a dark surface but falls far short of the 3:1 non-text edge-
+ * contrast floor against a light surface (~1.3:1) — so light schemes ring
+ * pips with `foreground` instead, dark schemes keep `border`.
+ */
+
+[data-theme="rime"][data-scheme="dark"] {
+  --background: oklch(18.1% 0.016 261.5);
+  --surface: oklch(21.4% 0.023 265.5);
+  --elevated: oklch(25.2% 0.029 263.9);
+  --foreground: oklch(93.4% 0.013 266.7);
+  --muted: oklch(67.5% 0.033 265.2);
+  --primary: oklch(70.7% 0.11 243.4);
+  --on-primary: oklch(16.8% 0.016 261.5);
+  --accent: oklch(64.7% 0.154 287.3);
+  --danger: oklch(66.8% 0.165 19.1);
+  --warning: oklch(76.9% 0.138 78.5);
+  --success: oklch(72.3% 0.137 142.7);
+  --info: oklch(68.6% 0.14 271.8);
+  --border: oklch(28.8% 0.03 262.8);
+  --input: oklch(24.8% 0.03 264.9);
+  --ring: oklch(74.5% 0.105 243.5);
+  --chart-1: oklch(70.7% 0.11 243.4);
+  --chart-2: oklch(76.3% 0.108 189.1);
+  --chart-3: oklch(70.5% 0.119 298.1);
+  --chart-4: oklch(76.9% 0.138 78.5);
+  --chart-5: oklch(69.2% 0.163 356.6);
+  --chart-6: oklch(72.4% 0.122 137.9);
+
+  --verdict-pass: oklch(62% 0.13 165.5);
+  --verdict-fail: oklch(62.1% 0.17 47.5);
+  --verdict-inconclusive: oklch(58% 0.01 260);
+  --verdict-error: oklch(67.9% 0.118 346.3);
+  --verdict-ring: var(--border);
+}
+
+[data-theme="rime"][data-scheme="light"] {
+  --background: oklch(95.7% 0.007 260.7);
+  --surface: oklch(98.4% 0.004 258.3);
+  --elevated: oklch(100% 0 0);
+  --foreground: oklch(22.2% 0.019 266.1);
+  --muted: oklch(50.1% 0.025 259.2);
+  --primary: oklch(53.2% 0.122 251.2);
+  --on-primary: oklch(100% 0 0);
+  --accent: oklch(48.6% 0.168 285.7);
+  --danger: oklch(54.7% 0.186 22.3);
+  --warning: oklch(50.8% 0.108 73.3);
+  --success: oklch(52.7% 0.115 150.5);
+  --info: oklch(49% 0.157 268);
+  --border: oklch(89.9% 0.014 258.3);
+  --input: oklch(93.2% 0.011 256.7);
+  --ring: oklch(53.2% 0.122 251.2);
+  --chart-1: oklch(53.2% 0.122 251.2);
+  --chart-2: oklch(54% 0.089 188.8);
+  --chart-3: oklch(51.6% 0.167 291.5);
+  --chart-4: oklch(50.8% 0.108 73.3);
+  --chart-5: oklch(53.5% 0.161 359);
+  --chart-6: oklch(53% 0.125 140.5);
+
+  --verdict-pass: oklch(62% 0.13 165.5);
+  --verdict-fail: oklch(62.1% 0.17 47.5);
+  --verdict-inconclusive: oklch(58% 0.01 260);
+  --verdict-error: oklch(67.9% 0.118 346.3);
+  --verdict-ring: var(--foreground);
+}
