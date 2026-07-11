@@ -12,8 +12,20 @@ export type { ArtifactStoreShape } from "./store.js"
 export { renderBrief, ScenarioInvalid, ScenarioNotFound, ScenarioRepo, ScenarioRepoLive } from "./scenarios.js"
 export type { LoadedScenario, ScenarioLoadError, ScenarioRepoShape } from "./scenarios.js"
 
-export { AgentAdapter, AgentRunError, ClaudeCliAdapterLive, StubAdapterLive } from "./adapter.js"
-export type { AgentAdapterShape, SubjectResult } from "./adapter.js"
+export {
+  AdapterRegistry,
+  AdapterRegistryLive,
+  AgentAdapter,
+  AgentRunError,
+  CLAUDE_CLI_HARNESS,
+  ClaudeCliAdapterLive,
+  cliAdapters,
+  CODEX_CLI_HARNESS,
+  CodexCliAdapterLive,
+  StubAdapterLive,
+  UnknownHarnessError,
+} from "./adapter.js"
+export type { AdapterMap, AdapterRegistryShape, AgentAdapterShape, SubjectResult } from "./adapter.js"
 
 export { IndexError, TrialIndex, TrialIndexLive } from "./index-db.js"
 export type { CellFilter, TrialIndexShape } from "./index-db.js"
