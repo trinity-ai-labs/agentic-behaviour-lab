@@ -1,0 +1,25 @@
+{
+  "name": "@abl/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "SolidJS dashboard for the Agentic Behaviour Lab.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@abl/engine": "workspace:*",
+    "@abl/server": "workspace:*",
+    "@effect/platform": "^0.96.2",
+    "effect": "^3.21.4",
+    "solid-js": "^1.9.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3"
+  }
+}
