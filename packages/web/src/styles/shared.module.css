@@ -1,0 +1,11 @@
+/* Status lines every view renders while its query loads or errors — shared
+   here instead of retyping the same two rules in each view's module. */
+.status {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.statusError {
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
