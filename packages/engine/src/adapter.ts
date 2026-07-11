@@ -13,7 +13,9 @@
  * per trial instead of one adapter being fixed at layer-wiring time.
  */
 import { Command, CommandExecutor, FileSystem } from '@effect/platform';
-import { Context, Data, Effect, Either, Layer, Schema } from 'effect';
+import { Context, Data, Effect, Either, Layer, Schema, Stream } from 'effect';
+import { SubjectDisposition } from './schema.js';
+export type { SubjectDisposition } from './schema.js';
 
 export class AgentRunError extends Data.TaggedError('AgentRunError')<{
   readonly modelId: string;
@@ -22,6 +24,7 @@ export class AgentRunError extends Data.TaggedError('AgentRunError')<{
 
 export interface SubjectResult {
   readonly finalMessage: string;
+  readonly disposition: SubjectDisposition;
 }
 
 export interface AgentAdapterShape {
@@ -39,6 +42,70 @@ export class AgentAdapter extends Context.Tag('@abl/engine/AgentAdapter')<
   AgentAdapterShape
 >() {}
 
+// ---------------------------------------------------------------------------
+// Provider degradation pattern tables
+//
+// Each entry maps an observable signal (exit code, stderr substring) to a
+// disposition reason. Checked after the process finishes; the first match
+// wins. Plain data, easily extended per adapter.
+// ---------------------------------------------------------------------------
+
+interface DegradationPattern {
+  readonly pattern: RegExp;
+  readonly reason: string;
+  readonly provider: string;
+}
+
+const RATE_LIMIT_PATTERNS: readonly DegradationPattern[] = [
+  { pattern: /rate_limit/i, reason: 'rate-limited by provider', provider: 'anthropic' },
+  { pattern: /rate_limit/i, reason: 'rate-limited by provider', provider: 'openai' },
+  { pattern: /429/i, reason: 'HTTP 429 rate-limited by provider', provider: 'anthropic' },
+  { pattern: /429/i, reason: 'HTTP 429 rate-limited by provider', provider: 'openai' },
+  { pattern: /overloaded_error/i, reason: 'overloaded error from provider', provider: 'anthropic' },
+];
+
+const OVERLOAD_PATTERNS: readonly DegradationPattern[] = [
+  { pattern: /529/i, reason: 'HTTP 529 overloaded', provider: 'anthropic' },
+  { pattern: /529/i, reason: 'HTTP 529 overloaded', provider: 'openai' },
+  { pattern: /overloaded/i, reason: 'provider overloaded', provider: 'anthropic' },
+  { pattern: /overloaded/i, reason: 'provider overloaded', provider: 'openai' },
+  { pattern: /service_unavailable/i, reason: 'service unavailable', provider: 'anthropic' },
+  { pattern: /service_unavailable/i, reason: 'service unavailable', provider: 'openai' },
+  { pattern: /internal_server_error/i, reason: 'provider internal error', provider: 'anthropic' },
+  { pattern: /internal_server_error/i, reason: 'provider internal error', provider: 'openai' },
+];
+
+const STREAM_STALL_PATTERNS: readonly DegradationPattern[] = [
+  { pattern: /stream watchdog/i, reason: 'stream stall — watchdog fired', provider: 'anthropic' },
+  { pattern: /stream watchdog/i, reason: 'stream stall — watchdog fired', provider: 'openai' },
+  {
+    pattern: /connection reset/i,
+    reason: 'stream stall — connection reset',
+    provider: 'anthropic',
+  },
+  { pattern: /connection reset/i, reason: 'stream stall — connection reset', provider: 'openai' },
+  {
+    pattern: /max retries exceeded/i,
+    reason: 'stream stall — max retries exceeded',
+    provider: 'anthropic',
+  },
+  {
+    pattern: /max retries exceeded/i,
+    reason: 'stream stall — max retries exceeded',
+    provider: 'openai',
+  },
+];
+
+const ALL_DEGRADATION_PATTERNS: readonly DegradationPattern[] = [
+  ...RATE_LIMIT_PATTERNS,
+  ...OVERLOAD_PATTERNS,
+  ...STREAM_STALL_PATTERNS,
+];
+
+/** Check stderr against all degradation patterns. Returns the first match, if any. */
+const matchDegradation = (stderr: string): DegradationPattern | undefined =>
+  ALL_DEGRADATION_PATTERNS.find((p) => p.pattern.test(stderr));
+
 /** Well-known harness ids for the two real CLI adapters; `AdapterRegistry` keys may be any string (tests register their own). */
 export const CLAUDE_CLI_HARNESS = 'claude-cli';
 export const CODEX_CLI_HARNESS = 'codex-cli';
@@ -51,6 +118,27 @@ const extractFinalMessage = (stdout: string): string => {
   const decoded = decodeCliResult(stdout);
   return Either.isRight(decoded) ? decoded.right.result : stdout;
 };
+
+/**
+ * Captures stdout, stderr, and exit code from a command process. Used by
+ * adapter `run` implementations so they can detect provider degradation
+ * patterns in stderr and set the disposition accordingly.
+ */
+const runWithDetails = (executor: CommandExecutor.CommandExecutor, command: Command.Command) =>
+  Effect.scoped(
+    Effect.gen(function* () {
+      const process = yield* executor.start(command);
+      const [stdout, stderr, exitCode] = yield* Effect.all(
+        [
+          Stream.mkString(Stream.decodeText(process.stdout)),
+          Stream.mkString(Stream.decodeText(process.stderr)),
+          process.exitCode,
+        ],
+        { concurrency: 'unbounded' },
+      );
+      return { stdout, stderr, exitCode: Number(exitCode) };
+    }),
+  );
 
 /** `<bin> --version`, trimmed; "unknown" when the binary is missing or the probe fails — the fingerprint must still carry something. */
 const probeVersion = (
@@ -98,8 +186,23 @@ export const ClaudeCliAdapterLive: Layer.Layer<
         'json',
       ).pipe(Command.workingDirectory(workspaceDir));
 
-      return executor.string(command).pipe(
-        Effect.map((stdout): SubjectResult => ({ finalMessage: extractFinalMessage(stdout) })),
+      return runWithDetails(executor, command).pipe(
+        Effect.map(({ stdout, stderr, exitCode }) => {
+          const finalMessage = extractFinalMessage(stdout);
+
+          // Check for provider degradation patterns in stderr first.
+          const degradation = matchDegradation(stderr);
+          if (degradation !== undefined) {
+            return { finalMessage, disposition: 'provider-degraded' as const };
+          }
+
+          // Non-zero exit without degradation signal means the agent crashed.
+          if (exitCode !== 0) {
+            return { finalMessage, disposition: 'crashed' as const };
+          }
+
+          return { finalMessage, disposition: 'completed' as const };
+        }),
         Effect.mapError((cause) => new AgentRunError({ modelId, cause })),
       );
     };
@@ -153,9 +256,17 @@ export const CodexCliAdapterLive: Layer.Layer<
             brief,
           ).pipe(Command.workingDirectory(workspaceDir));
 
-          yield* executor.string(command);
-          const finalMessage = yield* fs.readFileString(outputFile);
-          return { finalMessage: finalMessage.trim() } satisfies SubjectResult;
+          const { stderr, exitCode } = yield* runWithDetails(executor, command);
+          const finalMessage = (yield* fs.readFileString(outputFile)).trim();
+
+          const degradation = matchDegradation(stderr);
+          if (degradation !== undefined) {
+            return { finalMessage, disposition: 'provider-degraded' as const };
+          }
+          if (exitCode !== 0) {
+            return { finalMessage, disposition: 'crashed' as const };
+          }
+          return { finalMessage, disposition: 'completed' as const };
         }),
       ).pipe(Effect.mapError((cause) => new AgentRunError({ modelId, cause })));
 
@@ -194,8 +305,33 @@ export const StubAdapterLive = (
           Command.workingDirectory(workspaceDir),
           Command.env({ WORKSPACE_DIR: workspaceDir, BRIEF: brief }),
         );
-        return executor.string(command).pipe(
-          Effect.map((stdout): SubjectResult => ({ finalMessage: stdout.trim() })),
+        return runWithDetails(executor, command).pipe(
+          Effect.map(({ stdout, exitCode }): SubjectResult => {
+            // If the script emits a DISPOSITION:<value> line, honour it;
+            // otherwise derive from exit code.
+            const lines = stdout.split('\n');
+            const dispLine = lines.find((l) => l.startsWith('DISPOSITION:'));
+            const finalMessage = lines
+              .filter((l) => !l.startsWith('DISPOSITION:'))
+              .join('\n')
+              .trim();
+
+            if (dispLine) {
+              const value = dispLine.slice('DISPOSITION:'.length).trim();
+              // Only accept valid disposition values; if unknown, fall back to completed.
+              const disposition: SubjectDisposition = (
+                ['completed', 'crashed', 'timeout', 'provider-degraded'] as const
+              ).includes(value as SubjectDisposition)
+                ? (value as SubjectDisposition)
+                : 'completed';
+              return { finalMessage, disposition };
+            }
+
+            return {
+              finalMessage,
+              disposition: (exitCode === 0 ? 'completed' : 'crashed') as SubjectDisposition,
+            };
+          }),
           Effect.mapError((cause) => new AgentRunError({ modelId, cause })),
         );
       };
