@@ -14,7 +14,7 @@
     "test": "pnpm -r test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "pre-commit": "pnpm check",
     "gate": "pnpm build && pnpm check && pnpm test",
     "gate:enqueue": "node scripts/enqueue-gate.mjs",

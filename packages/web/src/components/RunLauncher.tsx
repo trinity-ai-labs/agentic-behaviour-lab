@@ -6,7 +6,7 @@
  * field covers a locally registered stub/harness id for dev/testing.
  */
 import { useNavigate } from '@solidjs/router';
-import { createMemo, createSignal, For, Show } from 'solid-js';
+import { createMemo, createSignal, For, Show, untrack } from 'solid-js';
 import type { ExecutionShape, RunConfig, ScenarioDefinition } from '../api/client';
 import { useCreateRun } from '../query/hooks/runs';
 import { Select } from './Select';
@@ -18,7 +18,9 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
   const navigate = useNavigate();
   const createRun = useCreateRun();
 
-  const [scenarioId, setScenarioId] = createSignal(props.scenarios[0]?.scenarioId ?? '');
+  const [scenarioId, setScenarioId] = createSignal(
+    untrack(() => props.scenarios[0]?.scenarioId) ?? '',
+  );
   const scenario = createMemo(() => props.scenarios.find((s) => s.scenarioId === scenarioId()));
 
   const [conditions, setConditions] = createSignal<ReadonlyArray<string>>([]);

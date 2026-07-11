@@ -14,7 +14,7 @@
  * breakdown is corroborating detail, not a second grid.
  */
 import { A, useParams } from '@solidjs/router';
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, untrack } from 'solid-js';
 import type { CellSummary, RunDetail as RunDetailPayload } from '../api/client';
 import { PipGrid } from '../components/PipGrid';
 import { StatusBadge } from '../components/StatusBadge';
@@ -49,11 +49,11 @@ export const RunDetail = () => {
 };
 
 const RunBody = (props: { detail: RunDetailPayload }) => {
-  const multiHarness = createMemo(() => (props.detail.run.config.harnesses?.length ?? 1) > 1);
+  const multiHarness = untrack(() => (props.detail.run.config.harnesses?.length ?? 1) > 1);
   // Only fetched when the breakdown will actually render (multi-harness run).
   const resultsQuery = useResults(
     () => ({ scenarioId: props.detail.run.config.scenarioId }),
-    multiHarness,
+    () => multiHarness,
   );
 
   // Grouped once per data change instead of a full filter() scan per cell.
@@ -106,7 +106,7 @@ const RunBody = (props: { detail: RunDetailPayload }) => {
                 {formatFailRate(failRateOf(cell.pass, cell.fail), cell.pass, cell.fail)} ·{' '}
                 {landedCount(cell)}/{cell.expectedTrials} landed
               </div>
-              <Show when={multiHarness()}>
+              <Show when={multiHarness}>
                 <ul class={styles.harnessBreakdown}>
                   <For each={harnessBreakdown(cell.condition, cell.modelId)}>
                     {(h) => (

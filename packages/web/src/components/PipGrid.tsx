@@ -14,7 +14,7 @@
  * `prefers-reduced-motion` is handled once in global.css (blanket
  * transition-duration override), so this component doesn't special-case it.
  */
-import { For, Index } from 'solid-js';
+import { createMemo, For, Index } from 'solid-js';
 import type { VerdictOutcome } from '@abl/engine';
 import { landedCount, VERDICT_META, VERDICT_ORDER } from '../lib/verdict';
 import styles from './PipGrid.module.css';
@@ -35,13 +35,18 @@ export const PipGrid = (props: PipGridProps) => {
   const landed = () => landedCount(props);
   const pending = () => Math.max(0, (props.expected ?? landed()) - landed());
 
+  const ariaLabel = createMemo(() => {
+    const total = landedCount(props);
+    const parts = VERDICT_ORDER.map(
+      (o) => `${outcomeCount(props, o)} ${VERDICT_META[o].label.toLowerCase()}`,
+    );
+    const pendingCount = Math.max(0, (props.expected ?? total) - total);
+    const pendingPart = pendingCount > 0 ? `, ${pendingCount} pending` : '';
+    return `${total} trials: ${parts.join(', ')}${pendingPart}`;
+  });
+
   return (
-    <div
-      class={styles.grid}
-      data-size={props.size ?? 'md'}
-      role="img"
-      aria-label={pipGridAriaLabel(props)}
-    >
+    <div class={styles.grid} data-size={props.size ?? 'md'} role="img" aria-label={ariaLabel()}>
       <For each={VERDICT_ORDER}>
         {(outcome) => (
           <Index each={Array.from({ length: outcomeCount(props, outcome) })}>
@@ -54,16 +59,6 @@ export const PipGrid = (props: PipGridProps) => {
       </Index>
     </div>
   );
-};
-
-const pipGridAriaLabel = (props: PipGridProps): string => {
-  const total = landedCount(props);
-  const parts = VERDICT_ORDER.map(
-    (o) => `${outcomeCount(props, o)} ${VERDICT_META[o].label.toLowerCase()}`,
-  );
-  const pendingCount = Math.max(0, (props.expected ?? total) - total);
-  const pendingPart = pendingCount > 0 ? `, ${pendingCount} pending` : '';
-  return `${total} trials: ${parts.join(', ')}${pendingPart}`;
 };
 
 const VerdictPip = (props: { outcome: VerdictOutcome | 'pending'; position: number }) => {
