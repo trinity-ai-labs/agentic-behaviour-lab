@@ -73,6 +73,19 @@ not 10%→30% (that needs ~60+ per arm). Consequences, adopted as design rules:
   subject declares which scenario × shape cells it is exposed to (the
   declaration lives with the subject, like a test file next to code), and runs
   cover declared cells only.
+- **Evidence quality is conditional on infrastructure health.** Provider
+  degradation (rate-limiting, overloads, stream stalls) can kill subjects
+  mid-trial, and a mechanical grader scoring a half-finished workspace
+  contaminates the exact rates the lab exists to measure. Three layers of
+  defence: (1) every trial records a **subject disposition** —
+  `completed`/`crashed`/`timeout`/`provider-degraded` — and only `completed`
+  trials reach the grader, the rest become `error` verdicts and never touch
+  fail rates; (2) at run start and end the runner captures **ambient
+  provider-health snapshots** from public status pages (best-effort, never
+  blocks a run); (3) when a run's error share crosses 20% the `RunRecord` and
+  every derived cell summary carry a `validity: "degraded-conditions"` flag.
+  Record infra health, never infer it away — the lab measures agent behaviour,
+  not provider reliability.
 
 ## Community flowback
 

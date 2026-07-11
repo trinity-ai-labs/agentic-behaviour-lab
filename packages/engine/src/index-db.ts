@@ -9,7 +9,7 @@
  */
 import { FileSystem, Path } from '@effect/platform';
 import Database from 'better-sqlite3';
-import { Context, Data, Effect, Layer } from 'effect';
+import { Context, Data, Effect, Layer, Option } from 'effect';
 import { CellSummary, ExecutionShape, TrialRecord } from './schema.js';
 import { ArtifactStore } from './store.js';
 
@@ -30,6 +30,11 @@ export interface TrialIndexShape {
   readonly reindex: Effect.Effect<void, IndexError>;
   /** Indexes one trial — called right after its `trial.json` is written. */
   readonly insertTrial: (trial: TrialRecord) => Effect.Effect<void, IndexError>;
+  /** Upserts a run's validity into the runs table — called after the run completes and validity is computed. */
+  readonly upsertValidity: (
+    runId: string,
+    validity: 'valid' | 'degraded-conditions',
+  ) => Effect.Effect<void, IndexError>;
   readonly cellSummaries: (
     filter?: CellFilter,
   ) => Effect.Effect<ReadonlyArray<CellSummary>, IndexError>;
@@ -54,6 +59,10 @@ CREATE TABLE IF NOT EXISTS trials (
   ended_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS trials_cell_idx ON trials (scenario_id, condition_label, model_id, harness, shape);
+CREATE TABLE IF NOT EXISTS runs (
+  run_id TEXT PRIMARY KEY,
+  validity TEXT
+);
 `;
 
 interface TrialRow {
@@ -93,6 +102,7 @@ interface CellRow {
   readonly inconclusive: number;
   readonly error: number;
   readonly trials: number;
+  readonly validity: string | null;
 }
 
 const failWith =
@@ -134,6 +144,9 @@ export const TrialIndexLive: Layer.Layer<
          (trial_id, run_id, scenario_id, condition_label, model_id, harness, shape, outcome, started_at, ended_at)
        VALUES (@trialId, @runId, @scenarioId, @conditionLabel, @modelId, @harness, @shape, @outcome, @startedAt, @endedAt)`,
     );
+    const upsertRunStmt = db.prepare(
+      `INSERT OR REPLACE INTO runs (run_id, validity) VALUES (@runId, @validity)`,
+    );
     // One transaction per bulk rebuild: without it better-sqlite3 auto-commits
     // (and fsyncs) every row, which makes reindexing a large store crawl.
     const replaceAll = db.transaction((rows: ReadonlyArray<TrialRow>) => {
@@ -147,15 +160,39 @@ export const TrialIndexLive: Layer.Layer<
         catch: failWith('insertTrial'),
       });
 
-    const reindex: TrialIndexShape['reindex'] = store.listAllTrials.pipe(
-      Effect.mapError(failWith('reindex:scan')),
-      Effect.flatMap((trials) =>
-        Effect.try({
-          try: () => void replaceAll(trials.map(rowOf)),
-          catch: failWith('reindex:rebuild'),
-        }),
-      ),
-    );
+    const upsertValidity: TrialIndexShape['upsertValidity'] = (runId, validity) =>
+      Effect.try({
+        try: () => void upsertRunStmt.run({ runId, validity }),
+        catch: failWith('upsertValidity'),
+      });
+
+    const reindex: TrialIndexShape['reindex'] = Effect.gen(function* () {
+      // Rebuild runs table first — validity is per run, and cell summaries
+      // derive it by joining through trials.
+      const runIds = yield* store.listRunIds.pipe(Effect.mapError(failWith('reindex:scan')));
+      const runs = yield* Effect.forEach(
+        runIds,
+        (runId) => store.readRun(runId).pipe(Effect.option),
+        { concurrency: 16 },
+      );
+      yield* Effect.try({
+        try: () => {
+          db.exec('DELETE FROM runs');
+          for (const run of runs) {
+            if (Option.isSome(run)) {
+              upsertRunStmt.run({ runId: run.value.runId, validity: run.value.validity ?? null });
+            }
+          }
+        },
+        catch: failWith('reindex:runs'),
+      });
+
+      const trials = yield* store.listAllTrials.pipe(Effect.mapError(failWith('reindex:scan')));
+      yield* Effect.try({
+        try: () => void replaceAll(trials.map(rowOf)),
+        catch: failWith('reindex:rebuild'),
+      });
+    });
 
     // Statements are cached per WHERE-clause shape — one entry per subset of
     // the three filterable columns (scenario, shape, harness), eight at most.
@@ -165,16 +202,18 @@ export const TrialIndexLive: Layer.Layer<
       let stmt = summaryStmts.get(where);
       if (stmt === undefined) {
         stmt = db.prepare(
-          `SELECT scenario_id, condition_label, model_id, harness, shape,
-                  SUM(CASE WHEN outcome = 'pass' THEN 1 ELSE 0 END) AS pass,
-                  SUM(CASE WHEN outcome = 'fail' THEN 1 ELSE 0 END) AS fail,
-                  SUM(CASE WHEN outcome = 'inconclusive' THEN 1 ELSE 0 END) AS inconclusive,
-                  SUM(CASE WHEN outcome = 'error' THEN 1 ELSE 0 END) AS error,
-                  COUNT(*) AS trials
-           FROM trials
+          `SELECT t.scenario_id, t.condition_label, t.model_id, t.harness, t.shape,
+                  SUM(CASE WHEN t.outcome = 'pass' THEN 1 ELSE 0 END) AS pass,
+                  SUM(CASE WHEN t.outcome = 'fail' THEN 1 ELSE 0 END) AS fail,
+                  SUM(CASE WHEN t.outcome = 'inconclusive' THEN 1 ELSE 0 END) AS inconclusive,
+                  SUM(CASE WHEN t.outcome = 'error' THEN 1 ELSE 0 END) AS error,
+                  COUNT(*) AS trials,
+                  MAX(r.validity) AS validity
+           FROM trials t
+           LEFT JOIN runs r ON t.run_id = r.run_id
            ${where}
-           GROUP BY scenario_id, condition_label, model_id, harness, shape
-           ORDER BY scenario_id, condition_label, model_id, harness, shape`,
+           GROUP BY t.scenario_id, t.condition_label, t.model_id, t.harness, t.shape
+           ORDER BY t.scenario_id, t.condition_label, t.model_id, t.harness, t.shape`,
         );
         summaryStmts.set(where, stmt);
       }
@@ -211,11 +250,12 @@ export const TrialIndexLive: Layer.Layer<
             inconclusive: row.inconclusive,
             error: row.error,
             failRate: row.pass + row.fail > 0 ? row.fail / (row.pass + row.fail) : null,
+            validity: (row.validity ?? undefined) as CellSummary['validity'],
           }));
         },
         catch: failWith('cellSummaries'),
       });
 
-    return TrialIndex.of({ reindex, insertTrial, cellSummaries });
+    return TrialIndex.of({ reindex, insertTrial, upsertValidity, cellSummaries });
   }),
 );

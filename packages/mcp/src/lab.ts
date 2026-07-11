@@ -23,7 +23,7 @@ import {
   type VerdictOutcome,
 } from '@abl/engine';
 import { FileSystem, Path } from '@effect/platform';
-import { Cause, Data, Effect, Exit, Fiber } from 'effect';
+import { Cause, Data, Effect, Exit, Fiber, Option } from 'effect';
 
 // ---------------------------------------------------------------------------
 // Scenario discovery
@@ -159,7 +159,7 @@ export const makeRunRegistry = (): RunRegistry => {
           run.config.harnesses.length *
           run.config.trialsPerCell,
         completedTrials: trials.length,
-        cells: summarizeCells(trials),
+        cells: summarizeCells(trials, run.validity),
         trials: trials.map((trial) => ({
           trialId: trial.trialId,
           condition: trial.condition.label,
@@ -203,7 +203,18 @@ export const results = (
     // still applies it uniformly for the per-run branch.
     const cells =
       filter.runId !== undefined
-        ? summarizeCells(yield* readRunTrials(yield* ArtifactStore, filter.runId))
+        ? yield* Effect.gen(function* () {
+            const store = yield* ArtifactStore;
+            const run = yield* store.readRun(filter.runId!).pipe(Effect.option, Effect.orDie);
+            const trials = yield* readRunTrials(store, filter.runId!);
+            return summarizeCells(
+              trials,
+              Option.match(run, {
+                onNone: () => undefined,
+                onSome: (r) => r.validity,
+              }),
+            );
+          })
         : yield* (yield* TrialIndex).cellSummaries(
             filter.scenarioId !== undefined ? { scenarioId: filter.scenarioId } : undefined,
           );
@@ -337,9 +348,13 @@ interface CellAccumulator {
  * Groups trial records into the same cell rows the SQLite index serves —
  * used for the per-run views the index cannot filter to. failRate mirrors
  * the index's definition: fail / (pass + fail), null until graded trials
- * exist.
+ * exist. An optional `validity` propagates the run-level provider-health
+ * flag to every cell derived from that run.
  */
-const summarizeCells = (trials: ReadonlyArray<TrialRecord>): Array<CellSummary> => {
+const summarizeCells = (
+  trials: ReadonlyArray<TrialRecord>,
+  validity?: CellSummary['validity'],
+): Array<CellSummary> => {
   const cells = new Map<string, CellAccumulator>();
   for (const trial of trials) {
     const key = `${trial.scenarioId} ${trial.condition.label} ${trial.fingerprint.modelId} ${trial.fingerprint.harness} ${trial.shape}`;
@@ -368,5 +383,6 @@ const summarizeCells = (trials: ReadonlyArray<TrialRecord>): Array<CellSummary> 
       ...cell,
       trials: cell.pass + cell.fail + cell.inconclusive + cell.error,
       failRate: cell.pass + cell.fail > 0 ? cell.fail / (cell.pass + cell.fail) : null,
+      validity,
     }));
 };

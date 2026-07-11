@@ -372,6 +372,7 @@ export const RunnerLive: Layer.Layer<
           validity,
         };
         yield* store.writeRun(completed);
+        yield* index.upsertValidity(runId, validity);
         return completed;
       });
 
