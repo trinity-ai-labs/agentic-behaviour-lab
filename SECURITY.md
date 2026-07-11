@@ -7,7 +7,7 @@ Security reports are still welcome: harness scripts execute agent-driven
 actions, so sandbox-escape or credential-leak issues in the harness itself are
 in scope. Report privately via GitHub's **Report a vulnerability** tab
 (Security → Advisories) on this repository, or email
-lorenzo@broccolistudios.com.
+info@trinityailabs.com.
 
 Responsible disclosure for research findings: if an experiment here surfaces a
 security-relevant behaviour in a third-party agent product, we report it to
