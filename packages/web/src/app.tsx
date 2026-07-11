@@ -4,6 +4,7 @@ import type { JSX } from "solid-js"
 import { Shell } from "./components/Shell"
 import { ThemeProvider } from "./lib/theme"
 import { queryClient } from "./query/client"
+import { authorRoute } from "./views/author"
 import { Benchmarks } from "./views/Benchmarks"
 import { RunDetail } from "./views/RunDetail"
 import { Runs } from "./views/Runs"
@@ -31,5 +32,6 @@ export const App = () => (
     <Route path="/runs/:runId" component={RunDetail} />
     <Route path="/trials/:trialId" component={Trial} />
     <Route path="/scenarios" component={Scenarios} />
+    <Route path={authorRoute.path} component={authorRoute.component} />
   </Router>
 )
