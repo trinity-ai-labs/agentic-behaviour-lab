@@ -19,8 +19,10 @@ export class IndexError extends Data.TaggedError("IndexError")<{
 }> {}
 
 export interface CellFilter {
-  readonly scenarioId?: string
-  readonly shape?: ExecutionShape
+  readonly scenarioId?: string | undefined
+  readonly shape?: ExecutionShape | undefined
+  /** Exact fingerprint harness string, e.g. "claude-code/2.1.206 (headless -p)". */
+  readonly harness?: string | undefined
 }
 
 export interface TrialIndexShape {
@@ -40,12 +42,13 @@ CREATE TABLE IF NOT EXISTS trials (
   scenario_id TEXT NOT NULL,
   condition_label TEXT NOT NULL,
   model_id TEXT NOT NULL,
+  harness TEXT NOT NULL,
   shape TEXT NOT NULL,
   outcome TEXT NOT NULL,
   started_at TEXT NOT NULL,
   ended_at TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS trials_cell_idx ON trials (scenario_id, condition_label, model_id, shape);
+CREATE INDEX IF NOT EXISTS trials_cell_idx ON trials (scenario_id, condition_label, model_id, harness, shape);
 `
 
 interface TrialRow {
@@ -54,6 +57,7 @@ interface TrialRow {
   readonly scenarioId: string
   readonly conditionLabel: string
   readonly modelId: string
+  readonly harness: string
   readonly shape: string
   readonly outcome: string
   readonly startedAt: string
@@ -66,6 +70,7 @@ const rowOf = (trial: TrialRecord): TrialRow => ({
   scenarioId: trial.scenarioId,
   conditionLabel: trial.condition.label,
   modelId: trial.fingerprint.modelId,
+  harness: trial.fingerprint.harness,
   shape: trial.shape,
   outcome: trial.verdict.outcome,
   startedAt: trial.startedAt,
@@ -76,6 +81,7 @@ interface CellRow {
   readonly scenario_id: string
   readonly condition_label: string
   readonly model_id: string
+  readonly harness: string
   readonly shape: ExecutionShape
   readonly pass: number
   readonly fail: number
@@ -118,8 +124,8 @@ export const TrialIndexLive: Layer.Layer<
 
     const insertStmt = db.prepare(
       `INSERT OR REPLACE INTO trials
-         (trial_id, run_id, scenario_id, condition_label, model_id, shape, outcome, started_at, ended_at)
-       VALUES (@trialId, @runId, @scenarioId, @conditionLabel, @modelId, @shape, @outcome, @startedAt, @endedAt)`,
+         (trial_id, run_id, scenario_id, condition_label, model_id, harness, shape, outcome, started_at, ended_at)
+       VALUES (@trialId, @runId, @scenarioId, @conditionLabel, @modelId, @harness, @shape, @outcome, @startedAt, @endedAt)`,
     )
     // One transaction per bulk rebuild: without it better-sqlite3 auto-commits
     // (and fsyncs) every row, which makes reindexing a large store crawl.
@@ -144,15 +150,15 @@ export const TrialIndexLive: Layer.Layer<
       ),
     )
 
-    // Statements are cached per WHERE-clause shape (there are only four:
-    // no filter, scenario, shape, scenario+shape).
+    // Statements are cached per WHERE-clause shape — one entry per subset of
+    // the three filterable columns (scenario, shape, harness), eight at most.
     const summaryStmts = new Map<string, Database.Statement>()
     const summaryStmt = (clauses: ReadonlyArray<string>) => {
       const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : ""
       let stmt = summaryStmts.get(where)
       if (stmt === undefined) {
         stmt = db.prepare(
-          `SELECT scenario_id, condition_label, model_id, shape,
+          `SELECT scenario_id, condition_label, model_id, harness, shape,
                   SUM(CASE WHEN outcome = 'pass' THEN 1 ELSE 0 END) AS pass,
                   SUM(CASE WHEN outcome = 'fail' THEN 1 ELSE 0 END) AS fail,
                   SUM(CASE WHEN outcome = 'inconclusive' THEN 1 ELSE 0 END) AS inconclusive,
@@ -160,8 +166,8 @@ export const TrialIndexLive: Layer.Layer<
                   COUNT(*) AS trials
            FROM trials
            ${where}
-           GROUP BY scenario_id, condition_label, model_id, shape
-           ORDER BY scenario_id, condition_label, model_id, shape`,
+           GROUP BY scenario_id, condition_label, model_id, harness, shape
+           ORDER BY scenario_id, condition_label, model_id, harness, shape`,
         )
         summaryStmts.set(where, stmt)
       }
@@ -181,12 +187,17 @@ export const TrialIndexLive: Layer.Layer<
             clauses.push("shape = @shape")
             params.shape = filter.shape
           }
+          if (filter?.harness !== undefined) {
+            clauses.push("harness = @harness")
+            params.harness = filter.harness
+          }
           const rows = summaryStmt(clauses).all(params) as ReadonlyArray<CellRow>
           return rows.map(
             (row): CellSummary => ({
               scenarioId: row.scenario_id,
               condition: row.condition_label,
               modelId: row.model_id,
+              harness: row.harness,
               shape: row.shape,
               trials: row.trials,
               pass: row.pass,

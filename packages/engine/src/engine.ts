@@ -1,15 +1,15 @@
 /**
  * One composed layer for the whole engine, so consumers (tests, the smoke
  * script, packages/mcp, packages/server) don't each re-derive the service
- * wiring order. Callers pick the adapter (real CLI vs stub) and the
- * scenario roots; everything else is wired here. The platform services
- * (FileSystem, Path, CommandExecutor) stay in the requirements so the
- * caller supplies `NodeContext.layer` — the engine itself is
+ * wiring order. Callers pick the registered adapters (real CLIs vs stubs)
+ * and the scenario roots; everything else is wired here. The platform
+ * services (FileSystem, Path, CommandExecutor) stay in the requirements so
+ * the caller supplies `NodeContext.layer` — the engine itself is
  * runtime-agnostic.
  */
 import { CommandExecutor, FileSystem, Path } from "@effect/platform"
 import { Layer } from "effect"
-import { AgentAdapter } from "./adapter.js"
+import { AdapterRegistryLive, type AdapterMap } from "./adapter.js"
 import { IndexError, TrialIndex, TrialIndexLive } from "./index-db.js"
 import { Runner, RunnerLive } from "./runner.js"
 import { ScenarioRepo, ScenarioRepoLive } from "./scenarios.js"
@@ -20,8 +20,13 @@ export interface EngineConfig {
   readonly ablHome?: string
   /** Scenario directories, searched in precedence order. */
   readonly scenarioRoots: ReadonlyArray<string>
-  /** Which agent plays the subject: `ClaudeCliAdapterLive` or `StubAdapterLive(...)`. */
-  readonly adapter: Layer.Layer<AgentAdapter, never, CommandExecutor.CommandExecutor>
+  /**
+   * Harness id -> adapter layer: `cliAdapters` (both real CLIs) in
+   * production entrypoints, `{ "claude-cli": StubAdapterLive(...) }` in
+   * tests. `RunConfig.harnesses` selects among these per run; every harness
+   * a run might request must be registered here.
+   */
+  readonly adapters: AdapterMap
 }
 
 export const EngineLive = (
@@ -34,7 +39,8 @@ export const EngineLive = (
   const store = ArtifactStoreLive(config.ablHome)
   const scenarios = ScenarioRepoLive(config.scenarioRoots)
   const index = TrialIndexLive.pipe(Layer.provide(store))
-  const runner = RunnerLive.pipe(Layer.provide(Layer.mergeAll(scenarios, store, config.adapter, index)))
+  const registry = AdapterRegistryLive(config.adapters)
+  const runner = RunnerLive.pipe(Layer.provide(Layer.mergeAll(scenarios, store, registry, index)))
   // The same layer references appear in several places; layer memoization
   // builds each service once and shares it across every consumer.
   return Layer.mergeAll(runner, store, scenarios, index)

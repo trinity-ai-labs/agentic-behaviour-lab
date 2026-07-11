@@ -29,9 +29,11 @@ export interface TestLab {
 export const makeTestLab = (): TestLab => {
   const ablHome = mkdtempSync(path.join(tmpdir(), "abl-mcp-test-"))
   const runtime: LabRuntime = ManagedRuntime.make(
-    EngineLive({ ablHome, scenarioRoots: [fixturesRoot], adapter: StubAdapterLive(stubScripts) }).pipe(
-      Layer.provideMerge(NodeContext.layer),
-    ),
+    EngineLive({
+      ablHome,
+      scenarioRoots: [fixturesRoot],
+      adapters: { "claude-cli": StubAdapterLive(stubScripts) },
+    }).pipe(Layer.provideMerge(NodeContext.layer)),
   )
   return {
     runtime,

@@ -145,7 +145,7 @@ export type ScenarioDefinition = typeof ScenarioDefinition.Type
 
 // ---------------------------------------------------------------------------
 // Run configuration — one benchmark invocation: a scenario fanned across
-// conditions × models, N trials per cell, budget-capped.
+// conditions × models × harnesses, N trials per cell, budget-capped.
 // ---------------------------------------------------------------------------
 
 export const RunConfig = Schema.Struct({
@@ -154,8 +154,17 @@ export const RunConfig = Schema.Struct({
   conditions: Schema.Array(Schema.String),
   /** Models to compare — the "same prompt, compare by model" axis. */
   models: Schema.Array(Schema.String),
+  /**
+   * Harnesses to compare — the "same prompt, compare by CLI" axis, fanned
+   * against conditions x models the same way models fans against
+   * conditions. Harness ids are free-form strings resolved by
+   * `AdapterRegistry` at trial time (well-known: "claude-cli", "codex-cli").
+   * Defaults to Claude Code alone so a config that predates this field
+   * still decodes and runs unchanged.
+   */
+  harnesses: Schema.optionalWith(Schema.Array(Schema.String), { default: () => ["claude-cli"] }),
   shape: ExecutionShape,
-  /** Trials per (condition × model) cell. */
+  /** Trials per (condition × model × harness) cell. */
   trialsPerCell: Schema.Number,
   /** Hard cap on concurrently running trials. */
   maxConcurrent: Schema.optionalWith(Schema.Number, { default: () => 4 }),
@@ -180,6 +189,12 @@ export const CellSummary = Schema.Struct({
   scenarioId: Schema.String,
   condition: Schema.String,
   modelId: Schema.String,
+  /**
+   * The executing harness+version from the trials' fingerprints (e.g.
+   * "claude-code/2.1.206 (headless -p)") — the cross-harness comparison
+   * axis. Cells split by it because behaviour is version-sensitive.
+   */
+  harness: Schema.String,
   shape: ExecutionShape,
   trials: Schema.Number,
   pass: Schema.Number,
