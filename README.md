@@ -6,7 +6,7 @@ actually change that behaviour.
 
 Production multi-agent setups (orchestrators dispatching implementers, durable
 work queues, gated merges) fail in ways that are rarely bugs in the tools and
-rarely random: they are *reproducible model tendencies*. An implementer ends its
+rarely random: they are _reproducible model tendencies_. An implementer ends its
 turn because it decided waiting on its own sub-agent was a stopping point. An
 orchestrator refuses an always-safe queue operation because a status line said
 "busy". These tendencies can be measured, and countermeasures can be tested
@@ -23,7 +23,7 @@ Each experiment lives in `experiments/NNN-slug/` and contains:
 - `probes/` — the scripts and prompts that make a trial reproducible.
 - `runs/` — raw per-trial artifacts (state logs, final agent messages), committed.
 - `FINDINGS.md` — what was established, at what confidence, and the guardrail
-  each finding implies — including *where* the guardrail belongs (workflow doc,
+  each finding implies — including _where_ the guardrail belongs (workflow doc,
   prompt/brief, tool output at the point of decision, or mechanical prevention).
 
 Two kinds of question, kept strictly apart:
@@ -36,8 +36,8 @@ Two kinds of question, kept strictly apart:
 
 ## Experiments
 
-| # | Question | Status | Findings |
-|---|----------|--------|----------|
+| #                                                     | Question                                                                                                                           | Status      | Findings                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------ |
 | [001](experiments/001-wait-shaped-failures/DESIGN.md) | Wait-shaped failures: when do agents stop-when-they-should-wait and wait-when-they-should-act, and which guardrails move the rate? | in progress | first harness-semantics facts landed |
 
 ## Repo layout
@@ -60,10 +60,10 @@ models exactly like the model-comparison axis — so "same scenario, compare by
 CLI" works out of the box. Every trial records the exact harness + version
 that executed it in its fingerprint.
 
-| Harness id | CLI | Headless invocation | Model ids |
-|---|---|---|---|
-| `claude-cli` | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `claude -p --model <id> --permission-mode bypassPermissions --output-format json` | Anthropic + whatever the local `claude` install is configured for |
-| `codex-cli` | [Codex](https://github.com/openai/codex) | `codex exec --model <id> --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --output-last-message <file>` | OpenAI + compatible providers per the local `codex` config |
+| Harness id   | CLI                                                           | Headless invocation                                                                                                     | Model ids                                                         |
+| ------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `claude-cli` | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `claude -p --model <id> --permission-mode bypassPermissions --output-format json`                                       | Anthropic + whatever the local `claude` install is configured for |
+| `codex-cli`  | [Codex](https://github.com/openai/codex)                      | `codex exec --model <id> --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --output-last-message <file>` | OpenAI + compatible providers per the local `codex` config        |
 
 Model ids are harness-scoped and passed through unvalidated — an id the CLI
 does not recognize fails that trial with an `error` verdict, which is the

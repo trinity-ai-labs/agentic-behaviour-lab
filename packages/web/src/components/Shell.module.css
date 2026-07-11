@@ -56,7 +56,7 @@
 /* Dark schemes: the violet --accent fill reads better than the muted --input
    here. Scoped to non-active tabs so the active tab keeps its --primary fill
    even while hovered. */
-[data-scheme="dark"] .navLink:not(.navLinkActive):hover {
+[data-scheme='dark'] .navLink:not(.navLinkActive):hover {
   color: var(--on-primary);
   background: var(--accent);
 }

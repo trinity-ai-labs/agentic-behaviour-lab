@@ -16,7 +16,7 @@
  * pips with `foreground` instead, dark schemes keep `border`.
  */
 
-[data-theme="rime"][data-scheme="dark"] {
+[data-theme='rime'][data-scheme='dark'] {
   --background: oklch(18.1% 0.016 261.5);
   --surface: oklch(21.4% 0.023 265.5);
   --elevated: oklch(25.2% 0.029 263.9);
@@ -46,7 +46,7 @@
   --verdict-ring: var(--border);
 }
 
-[data-theme="rime"][data-scheme="light"] {
+[data-theme='rime'][data-scheme='light'] {
   --background: oklch(95.7% 0.007 260.7);
   --surface: oklch(98.4% 0.004 258.3);
   --elevated: oklch(100% 0 0);

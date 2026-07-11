@@ -17,17 +17,17 @@ import {
   type RunConfig,
   type RunRecord,
   type RunTrialParams,
-} from "@abl/engine"
-import { Effect } from "effect"
-import { randomUUID } from "node:crypto"
-import { RunRejected, ScenarioNotFound, type RunStarted } from "./api.js"
+} from '@abl/engine';
+import { Effect } from 'effect';
+import { randomUUID } from 'node:crypto';
+import { RunRejected, ScenarioNotFound, type RunStarted } from './api.js';
 
-const nowIso = (): string => new Date().toISOString()
+const nowIso = (): string => new Date().toISOString();
 
 interface Cell {
-  readonly condition: RunTrialParams["condition"]
-  readonly modelId: string
-  readonly harness: string
+  readonly condition: RunTrialParams['condition'];
+  readonly modelId: string;
+  readonly harness: string;
 }
 
 /** Every (condition × model × harness × trial-index) the config promises — one entry per trial to run. */
@@ -35,27 +35,29 @@ const deriveCells = (
   scenario: LoadedScenario,
   config: RunConfig,
 ): Effect.Effect<ReadonlyArray<Cell>, RunRejected> => {
-  const byLabel = new Map(scenario.definition.conditions.map((condition) => [condition.label, condition]))
-  const missing = config.conditions.filter((label) => !byLabel.has(label))
+  const byLabel = new Map(
+    scenario.definition.conditions.map((condition) => [condition.label, condition]),
+  );
+  const missing = config.conditions.filter((label) => !byLabel.has(label));
   if (missing.length > 0) {
     return Effect.fail(
       new RunRejected({
-        reason: `unknown condition(s) for scenario "${config.scenarioId}": ${missing.join(", ")} (known: ${[...byLabel.keys()].join(", ")})`,
+        reason: `unknown condition(s) for scenario "${config.scenarioId}": ${missing.join(', ')} (known: ${[...byLabel.keys()].join(', ')})`,
       }),
-    )
+    );
   }
   return Effect.succeed(
     config.conditions.flatMap((label) => {
       // Safe: every label in config.conditions was validated against byLabel above.
-      const condition = byLabel.get(label)!
+      const condition = byLabel.get(label)!;
       return config.models.flatMap((modelId) =>
         config.harnesses.flatMap((harness) =>
           Array.from({ length: config.trialsPerCell }, () => ({ condition, modelId, harness })),
         ),
-      )
+      );
     }),
-  )
-}
+  );
+};
 
 /**
  * Validates the config, records the run as `running`, then forks the trial
@@ -64,23 +66,28 @@ const deriveCells = (
  */
 export const launchRun = (
   config: RunConfig,
-): Effect.Effect<RunStarted, ScenarioNotFound | RunRejected, Runner | ScenarioRepo | ArtifactStore> =>
+): Effect.Effect<
+  RunStarted,
+  ScenarioNotFound | RunRejected,
+  Runner | ScenarioRepo | ArtifactStore
+> =>
   Effect.gen(function* () {
-    const scenarios = yield* ScenarioRepo
-    const store = yield* ArtifactStore
-    const runner = yield* Runner
+    const scenarios = yield* ScenarioRepo;
+    const store = yield* ArtifactStore;
+    const runner = yield* Runner;
 
     const scenario = yield* scenarios.load(config.scenarioId).pipe(
       Effect.catchTags({
-        ScenarioNotFound: () => Effect.fail(new ScenarioNotFound({ scenarioId: config.scenarioId })),
+        ScenarioNotFound: () =>
+          Effect.fail(new ScenarioNotFound({ scenarioId: config.scenarioId })),
         ScenarioInvalid: (cause) => Effect.die(cause),
       }),
-    )
-    const cells = yield* deriveCells(scenario, config)
+    );
+    const cells = yield* deriveCells(scenario, config);
 
-    const runId = randomUUID()
-    const running: RunRecord = { runId, config, startedAt: nowIso(), status: "running" }
-    yield* store.writeRun(running).pipe(Effect.orDie)
+    const runId = randomUUID();
+    const running: RunRecord = { runId, config, startedAt: nowIso(), status: 'running' };
+    yield* store.writeRun(running).pipe(Effect.orDie);
 
     const batch = Effect.forEach(
       cells,
@@ -89,20 +96,20 @@ export const launchRun = (
       { concurrency: config.maxConcurrent, discard: true },
     ).pipe(
       Effect.matchCauseEffect({
-        onSuccess: () => store.writeRun({ ...running, status: "completed", endedAt: nowIso() }),
+        onSuccess: () => store.writeRun({ ...running, status: 'completed', endedAt: nowIso() }),
         onFailure: (cause) =>
           Effect.logError(`run ${runId} aborted`, cause).pipe(
-            Effect.zipRight(store.writeRun({ ...running, status: "aborted", endedAt: nowIso() })),
+            Effect.zipRight(store.writeRun({ ...running, status: 'aborted', endedAt: nowIso() })),
           ),
       }),
       // A failed terminal writeRun means the store itself broke: die like
       // every other store call — the defect is logged when the fiber ends.
       Effect.orDie,
-    )
+    );
 
     // Daemon fork: the request fiber is interrupted as soon as the response
     // is sent, so the batch must live in the global scope.
-    yield* Effect.forkDaemon(batch)
+    yield* Effect.forkDaemon(batch);
 
-    return { runId }
-  })
+    return { runId };
+  });

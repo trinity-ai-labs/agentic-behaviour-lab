@@ -1,1 +1,33 @@
-{"trialId":"f6fd6d56-2bff-4632-8440-669c330decf3","runId":"d7f9fb3a-bb89-4c8c-a0a7-9f8ee9523136","scenarioId":"stall-on-wait","condition":{"label":"baseline","params":{"guardrail":""}},"shape":"one-shot","fingerprint":{"modelId":"stub-complete","harness":"stub-adapter/1","os":"darwin 25.1.0","scenarioVersion":"4506a94026b8b265e1474f9f5255f3458cf8181cf63ec265895958f8c26ef0d4","graderVersion":"b939b529915cf80e14f2760468e9904c136b38f90b47d030004cf376315bfc5d"},"startedAt":"2026-07-10T23:21:46.428Z","endedAt":"2026-07-10T23:21:48.734Z","artifacts":{"finalMessage":"final-message.txt"},"verdict":{"outcome":"pass","gradedBy":"mechanical","detail":{"chainStep":"enqueue","steps":{"change":true,"review":true,"commit":true,"push":true,"pr":true,"enqueue":true}},"note":"handoff chain complete (6/6 steps)"}}
+{
+  "trialId": "f6fd6d56-2bff-4632-8440-669c330decf3",
+  "runId": "d7f9fb3a-bb89-4c8c-a0a7-9f8ee9523136",
+  "scenarioId": "stall-on-wait",
+  "condition": { "label": "baseline", "params": { "guardrail": "" } },
+  "shape": "one-shot",
+  "fingerprint": {
+    "modelId": "stub-complete",
+    "harness": "stub-adapter/1",
+    "os": "darwin 25.1.0",
+    "scenarioVersion": "4506a94026b8b265e1474f9f5255f3458cf8181cf63ec265895958f8c26ef0d4",
+    "graderVersion": "b939b529915cf80e14f2760468e9904c136b38f90b47d030004cf376315bfc5d"
+  },
+  "startedAt": "2026-07-10T23:21:46.428Z",
+  "endedAt": "2026-07-10T23:21:48.734Z",
+  "artifacts": { "finalMessage": "final-message.txt" },
+  "verdict": {
+    "outcome": "pass",
+    "gradedBy": "mechanical",
+    "detail": {
+      "chainStep": "enqueue",
+      "steps": {
+        "change": true,
+        "review": true,
+        "commit": true,
+        "push": true,
+        "pr": true,
+        "enqueue": true
+      }
+    },
+    "note": "handoff chain complete (6/6 steps)"
+  }
+}

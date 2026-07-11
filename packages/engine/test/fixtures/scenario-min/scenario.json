@@ -7,8 +7,6 @@
   "fixture": "fixture.mjs",
   "grader": "grader.mjs",
   "brief": "brief.md",
-  "conditions": [
-    { "label": "default", "params": { "style": "sequentially" } }
-  ],
+  "conditions": [{ "label": "default", "params": { "style": "sequentially" } }],
   "declaredShapes": ["one-shot"]
 }

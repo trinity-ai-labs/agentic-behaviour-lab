@@ -1,15 +1,15 @@
-import { Route, Router } from "@solidjs/router"
-import { QueryClientProvider } from "@tanstack/solid-query"
-import type { JSX } from "solid-js"
-import { Shell } from "./components/Shell"
-import { ThemeProvider } from "./lib/theme"
-import { queryClient } from "./query/client"
-import { authorRoute } from "./views/author"
-import { Benchmarks } from "./views/Benchmarks"
-import { RunDetail } from "./views/RunDetail"
-import { Runs } from "./views/Runs"
-import { Scenarios } from "./views/Scenarios"
-import { Trial } from "./views/Trial"
+import { Route, Router } from '@solidjs/router';
+import { QueryClientProvider } from '@tanstack/solid-query';
+import type { JSX } from 'solid-js';
+import { Shell } from './components/Shell';
+import { ThemeProvider } from './lib/theme';
+import { queryClient } from './query/client';
+import { authorRoute } from './views/author';
+import { Benchmarks } from './views/Benchmarks';
+import { RunDetail } from './views/RunDetail';
+import { Runs } from './views/Runs';
+import { Scenarios } from './views/Scenarios';
+import { Trial } from './views/Trial';
 
 // Provider order matters: theme is a leaf (depends on nothing); the query
 // client sits above everything that queries; Shell (chrome + nav) lives in
@@ -23,7 +23,7 @@ const Root = (props: { children?: JSX.Element }) => (
       <Shell>{props.children}</Shell>
     </QueryClientProvider>
   </ThemeProvider>
-)
+);
 
 export const App = () => (
   <Router root={Root}>
@@ -34,4 +34,4 @@ export const App = () => (
     <Route path="/scenarios" component={Scenarios} />
     <Route path={authorRoute.path} component={authorRoute.component} />
   </Router>
-)
+);

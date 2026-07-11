@@ -1,7 +1,7 @@
-import { createQuery } from "@tanstack/solid-query"
-import { api, type ResultsFilter } from "../../api/client"
-import { queryKeys } from "../keys"
-import { QUERY_TIERS } from "../tiers"
+import { createQuery } from '@tanstack/solid-query';
+import { api, type ResultsFilter } from '../../api/client';
+import { queryKeys } from '../keys';
+import { QUERY_TIERS } from '../tiers';
 
 /**
  * The comparison-grid data source: GET /api/results, narrowed by
@@ -16,4 +16,4 @@ export const useResults = (filter: () => ResultsFilter, enabled: () => boolean =
     queryFn: () => api.results.list(filter()),
     enabled: enabled(),
     ...QUERY_TIERS.semiStable,
-  }))
+  }));

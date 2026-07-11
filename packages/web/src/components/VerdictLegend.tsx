@@ -5,9 +5,9 @@
  * (PipGrid's title/aria-label), so meaning never depends on this legend
  * being visible, but it's the fast lookup for a sighted reader.
  */
-import { For } from "solid-js"
-import { VERDICT_META, VERDICT_ORDER } from "../lib/verdict"
-import styles from "./VerdictLegend.module.css"
+import { For } from 'solid-js';
+import { VERDICT_META, VERDICT_ORDER } from '../lib/verdict';
+import styles from './VerdictLegend.module.css';
 
 export const VerdictLegend = () => (
   <ul class={styles.legend}>
@@ -22,4 +22,4 @@ export const VerdictLegend = () => (
       )}
     </For>
   </ul>
-)
+);

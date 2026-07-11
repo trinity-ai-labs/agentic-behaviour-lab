@@ -5,54 +5,55 @@
  * fans the same way models does; CellSummary.harness carries the executing
  * fingerprint harness string), not folded into the model label.
  */
-import { For, Show, createMemo } from "solid-js"
-import type { CellSummary, ScenarioDefinition } from "../api/client"
-import { formatFailRate } from "../lib/format"
-import { PipGrid } from "./PipGrid"
-import styles from "./ComparisonGrid.module.css"
+import { For, Show, createMemo } from 'solid-js';
+import type { CellSummary, ScenarioDefinition } from '../api/client';
+import { formatFailRate } from '../lib/format';
+import { PipGrid } from './PipGrid';
+import styles from './ComparisonGrid.module.css';
 
 export interface ComparisonGridProps {
-  readonly scenario: ScenarioDefinition
-  readonly cells: ReadonlyArray<CellSummary>
+  readonly scenario: ScenarioDefinition;
+  readonly cells: ReadonlyArray<CellSummary>;
 }
 
 interface Column {
-  readonly modelId: string
-  readonly harness: string
+  readonly modelId: string;
+  readonly harness: string;
 }
 
 /** "|" can appear in a harness string ("headless -p" won't, but ids are free-form), so the joiner is a US separator control-picture character that never occurs in either field. */
-const columnKey = (modelId: string, harness: string): string => `${modelId}␟${harness}`
+const columnKey = (modelId: string, harness: string): string => `${modelId}␟${harness}`;
 
 export const ComparisonGrid = (props: ComparisonGridProps) => {
   // Column objects are cached across recomputes so a data refetch that adds
   // trials (but no new model x harness pair) hands <For> the SAME references —
   // otherwise every poll tick would remount the whole table instead of
   // patching the changed numbers.
-  const columnCache = new Map<string, Column>()
+  const columnCache = new Map<string, Column>();
   const columns = createMemo<ReadonlyArray<Column>>(() => {
-    const present = new Set<string>()
+    const present = new Set<string>();
     for (const cell of props.cells) {
-      const key = columnKey(cell.modelId, cell.harness)
-      present.add(key)
-      if (!columnCache.has(key)) columnCache.set(key, { modelId: cell.modelId, harness: cell.harness })
+      const key = columnKey(cell.modelId, cell.harness);
+      present.add(key);
+      if (!columnCache.has(key))
+        columnCache.set(key, { modelId: cell.modelId, harness: cell.harness });
     }
     return [...present]
       .map((key) => columnCache.get(key)!)
-      .sort((a, b) => a.modelId.localeCompare(b.modelId) || a.harness.localeCompare(b.harness))
-  })
+      .sort((a, b) => a.modelId.localeCompare(b.modelId) || a.harness.localeCompare(b.harness));
+  });
 
   // One O(cells) pass per data change, O(1) per rendered cell after that.
   const cellsByKey = createMemo(() => {
-    const map = new Map<string, CellSummary>()
+    const map = new Map<string, CellSummary>();
     for (const cell of props.cells) {
-      map.set(`${cell.condition}␟${columnKey(cell.modelId, cell.harness)}`, cell)
+      map.set(`${cell.condition}␟${columnKey(cell.modelId, cell.harness)}`, cell);
     }
-    return map
-  })
+    return map;
+  });
 
   const cellFor = (conditionLabel: string, column: Column): CellSummary | undefined =>
-    cellsByKey().get(`${conditionLabel}␟${columnKey(column.modelId, column.harness)}`)
+    cellsByKey().get(`${conditionLabel}␟${columnKey(column.modelId, column.harness)}`);
 
   return (
     <div class={styles.wrap}>
@@ -98,7 +99,9 @@ export const ComparisonGrid = (props: ComparisonGridProps) => {
                               inconclusive={c().inconclusive}
                               error={c().error}
                             />
-                            <div class={styles.cellStat}>{formatFailRate(c().failRate, c().pass, c().fail)}</div>
+                            <div class={styles.cellStat}>
+                              {formatFailRate(c().failRate, c().pass, c().fail)}
+                            </div>
                           </div>
                         )}
                       </Show>
@@ -111,5 +114,5 @@ export const ComparisonGrid = (props: ComparisonGridProps) => {
         </tbody>
       </table>
     </div>
-  )
-}
+  );
+};

@@ -21,38 +21,38 @@
   border: 1px solid var(--verdict-ring);
 }
 
-.grid[data-size="md"] .pip {
+.grid[data-size='md'] .pip {
   width: 1.125rem;
   height: 1.125rem;
   font-size: 0.625rem;
 }
 
-.grid[data-size="sm"] .pip {
+.grid[data-size='sm'] .pip {
   width: 0.8125rem;
   height: 0.8125rem;
   font-size: 0.5rem;
 }
 
-.pip[data-verdict="pass"] {
+.pip[data-verdict='pass'] {
   background: var(--verdict-pass);
   color: var(--on-primary);
 }
-.pip[data-verdict="fail"] {
+.pip[data-verdict='fail'] {
   background: var(--verdict-fail);
   color: var(--on-primary);
 }
-.pip[data-verdict="inconclusive"] {
+.pip[data-verdict='inconclusive'] {
   background: var(--verdict-inconclusive);
   color: var(--on-primary);
 }
-.pip[data-verdict="error"] {
+.pip[data-verdict='error'] {
   background: var(--verdict-error);
   color: var(--on-primary);
 }
 
 /* Not-yet-landed trial in a live run: outline only, no fill, no ring (it
    isn't a verdict yet), no animation (nothing to announce arriving). */
-.pip[data-verdict="pending"] {
+.pip[data-verdict='pending'] {
   background: transparent;
   border: 1px dashed var(--border);
   animation: none;

@@ -15,12 +15,12 @@ consistent, on-brand control.
 
 ## Sites to migrate (all four)
 
-| File | Line | Picker | Options source |
-|------|------|--------|----------------|
-| `src/views/Benchmarks.tsx` | ~46 | scenario | `scenarios()` → `{value: scenarioId, label: title}` |
-| `src/components/RunLauncher.tsx` | ~85 | scenario | `props.scenarios` |
-| `src/components/RunLauncher.tsx` | ~121 | shape | `s().declaredShapes` |
-| `src/components/ThemeToggle.tsx` | ~10 | theme | `rime` / `ledger` (sr-only label) |
+| File                             | Line | Picker   | Options source                                      |
+| -------------------------------- | ---- | -------- | --------------------------------------------------- |
+| `src/views/Benchmarks.tsx`       | ~46  | scenario | `scenarios()` → `{value: scenarioId, label: title}` |
+| `src/components/RunLauncher.tsx` | ~85  | scenario | `props.scenarios`                                   |
+| `src/components/RunLauncher.tsx` | ~121 | shape    | `s().declaredShapes`                                |
+| `src/components/ThemeToggle.tsx` | ~10  | theme    | `rime` / `ledger` (sr-only label)                   |
 
 ## Component API
 
@@ -28,21 +28,21 @@ consistent, on-brand control.
 
 ```ts
 export type SelectOption<T extends string> = {
-  value: T
-  label: string
-  disabled?: boolean
-}
+  value: T;
+  label: string;
+  disabled?: boolean;
+};
 
 export type SelectProps<T extends string> = {
-  value: T                       // "" means nothing chosen → placeholder shown
-  onChange: (value: T) => void
-  options: SelectOption<T>[]
-  placeholder?: string           // trigger text when value is ""
-  label?: string                 // visible label text (optional)
-  "aria-label"?: string          // for label-less / sr-only cases (ThemeToggle)
-  disabled?: boolean
-  class?: string                 // optional extra class on the wrapper
-}
+  value: T; // "" means nothing chosen → placeholder shown
+  onChange: (value: T) => void;
+  options: SelectOption<T>[];
+  placeholder?: string; // trigger text when value is ""
+  label?: string; // visible label text (optional)
+  'aria-label'?: string; // for label-less / sr-only cases (ThemeToggle)
+  disabled?: boolean;
+  class?: string; // optional extra class on the wrapper
+};
 ```
 
 Same component at every site — scenario ids, `ExecutionShape`, and `ThemeId`

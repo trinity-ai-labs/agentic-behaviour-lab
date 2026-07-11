@@ -1,12 +1,12 @@
-import { For, Show } from "solid-js"
-import { RunLauncher } from "../components/RunLauncher"
-import { ScenarioCard } from "../components/ScenarioCard"
-import { useScenarios } from "../query/hooks/scenarios"
-import shared from "../styles/shared.module.css"
-import styles from "./Scenarios.module.css"
+import { For, Show } from 'solid-js';
+import { RunLauncher } from '../components/RunLauncher';
+import { ScenarioCard } from '../components/ScenarioCard';
+import { useScenarios } from '../query/hooks/scenarios';
+import shared from '../styles/shared.module.css';
+import styles from './Scenarios.module.css';
 
 export const Scenarios = () => {
-  const scenariosQuery = useScenarios()
+  const scenariosQuery = useScenarios();
 
   return (
     <div class={styles.page}>
@@ -16,7 +16,9 @@ export const Scenarios = () => {
         <p class={shared.status}>Loading scenarios…</p>
       </Show>
       <Show when={scenariosQuery.isError}>
-        <p class={shared.statusError}>Failed to load scenarios: {String(scenariosQuery.error?.message)}</p>
+        <p class={shared.statusError}>
+          Failed to load scenarios: {String(scenariosQuery.error?.message)}
+        </p>
       </Show>
 
       <Show when={scenariosQuery.data}>
@@ -30,5 +32,5 @@ export const Scenarios = () => {
         )}
       </Show>
     </div>
-  )
-}
+  );
+};

@@ -6,32 +6,32 @@
  *
  *   pnpm --filter @abl/engine smoke
  */
-import { NodeRuntime } from "@effect/platform-node"
-import { Effect } from "effect"
-import { Runner, TrialIndex } from "../src/index.js"
-import { cleanupTempHome, makeTempHome, stubEngine } from "../test/support.js"
+import { NodeRuntime } from '@effect/platform-node';
+import { Effect } from 'effect';
+import { Runner, TrialIndex } from '../src/index.js';
+import { cleanupTempHome, makeTempHome, stubEngine } from '../test/support.js';
 
-const ablHome = makeTempHome()
+const ablHome = makeTempHome();
 
 const program = Effect.gen(function* () {
-  const runner = yield* Runner
-  const index = yield* TrialIndex
+  const runner = yield* Runner;
+  const index = yield* TrialIndex;
 
-  yield* Effect.log(`smoke ABL_HOME: ${ablHome}`)
+  yield* Effect.log(`smoke ABL_HOME: ${ablHome}`);
 
   const run = yield* runner.runBatch({
-    scenarioId: "scenario-min",
-    conditions: ["default"],
-    models: ["stub-complete", "stub-partial", "stub-poison", "stub-noop"],
-    harnesses: ["claude-cli"],
-    shape: "one-shot",
+    scenarioId: 'scenario-min',
+    conditions: ['default'],
+    models: ['stub-complete', 'stub-partial', 'stub-poison', 'stub-noop'],
+    harnesses: ['claude-cli'],
+    shape: 'one-shot',
     trialsPerCell: 2,
     maxConcurrent: 4,
-  })
+  });
 
-  yield* Effect.log(`run ${run.runId} ${run.status} (${run.startedAt} -> ${run.endedAt})`)
+  yield* Effect.log(`run ${run.runId} ${run.status} (${run.startedAt} -> ${run.endedAt})`);
 
-  const summaries = yield* index.cellSummaries()
+  const summaries = yield* index.cellSummaries();
   console.table(
     summaries.map((cell) => ({
       scenario: cell.scenarioId,
@@ -45,7 +45,7 @@ const program = Effect.gen(function* () {
       error: cell.error,
       failRate: cell.failRate,
     })),
-  )
-}).pipe(Effect.ensuring(Effect.sync(() => cleanupTempHome(ablHome))))
+  );
+}).pipe(Effect.ensuring(Effect.sync(() => cleanupTempHome(ablHome))));
 
-NodeRuntime.runMain(program.pipe(Effect.provide(stubEngine(ablHome))))
+NodeRuntime.runMain(program.pipe(Effect.provide(stubEngine(ablHome))));

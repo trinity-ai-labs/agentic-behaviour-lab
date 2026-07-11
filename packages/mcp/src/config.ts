@@ -3,7 +3,7 @@
  * local-workspace precedence is a named, testable rule rather than a side
  * effect of the entrypoint.
  */
-import * as NodePath from "node:path"
+import * as NodePath from 'node:path';
 
 /**
  * An explicit ABL_SCENARIO_ROOTS value (path-delimiter-separated) wins;
@@ -18,4 +18,4 @@ export const resolveScenarioRoots = (
 ): ReadonlyArray<string> =>
   env !== undefined && env.length > 0
     ? env.split(NodePath.delimiter).filter((root) => root.length > 0)
-    : [NodePath.join(cwd, "scenarios"), NodePath.join(ablHome, "scenarios")]
+    : [NodePath.join(cwd, 'scenarios'), NodePath.join(ablHome, 'scenarios')];

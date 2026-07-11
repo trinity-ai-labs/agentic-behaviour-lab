@@ -32,16 +32,16 @@
   border: 1px solid var(--verdict-ring);
   color: var(--on-primary);
 }
-.verdictBadge[data-verdict="pass"] {
+.verdictBadge[data-verdict='pass'] {
   background: var(--verdict-pass);
 }
-.verdictBadge[data-verdict="fail"] {
+.verdictBadge[data-verdict='fail'] {
   background: var(--verdict-fail);
 }
-.verdictBadge[data-verdict="inconclusive"] {
+.verdictBadge[data-verdict='inconclusive'] {
   background: var(--verdict-inconclusive);
 }
-.verdictBadge[data-verdict="error"] {
+.verdictBadge[data-verdict='error'] {
   background: var(--verdict-error);
 }
 

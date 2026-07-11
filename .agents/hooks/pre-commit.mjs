@@ -14,14 +14,8 @@
 // commit. Terminal commits (no agent involved) are intentionally ungated
 // locally; CI is the backstop.
 
-import { execFileSync } from "node:child_process";
-import {
-  readInput,
-  detectHarness,
-  getCommand,
-  emit,
-  isCLI,
-} from "./_io.mjs";
+import { execFileSync } from 'node:child_process';
+import { readInput, detectHarness, getCommand, emit, isCLI } from './_io.mjs';
 
 /**
  * True iff the bash command is a `git commit` invocation (in any form —
@@ -30,10 +24,10 @@ import {
  */
 export function isGitCommit(cmd) {
   const tokens = cmd.trim().split(/\s+/);
-  if (tokens[0] !== "git") return false;
+  if (tokens[0] !== 'git') return false;
   for (let i = 1; i < tokens.length; i++) {
-    if (tokens[i].startsWith("-")) continue; // skip git-level flags like `-c`
-    return tokens[i] === "commit";
+    if (tokens[i].startsWith('-')) continue; // skip git-level flags like `-c`
+    return tokens[i] === 'commit';
   }
   return false;
 }
@@ -49,7 +43,7 @@ export default async function gate(input) {
   if (!isGitCommit(cmd)) return { approve: true };
 
   try {
-    execFileSync("pnpm", ["pre-commit"], { stdio: "inherit" });
+    execFileSync('pnpm', ['pre-commit'], { stdio: 'inherit' });
     return { approve: true };
   } catch (err) {
     return {

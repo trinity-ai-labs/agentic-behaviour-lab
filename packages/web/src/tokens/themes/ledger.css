@@ -7,7 +7,7 @@
  * light surfaces too, the same shortfall rime.css documents).
  */
 
-[data-theme="ledger"][data-scheme="dark"] {
+[data-theme='ledger'][data-scheme='dark'] {
   --background: oklch(21.8% 0.006 91.6);
   --surface: oklch(24% 0.008 84.6);
   --elevated: oklch(27.2% 0.015 95.6);
@@ -37,7 +37,7 @@
   --verdict-ring: var(--border);
 }
 
-[data-theme="ledger"][data-scheme="light"] {
+[data-theme='ledger'][data-scheme='light'] {
   --background: oklch(97.4% 0.014 88.7);
   --surface: oklch(99.4% 0.008 91.5);
   --elevated: oklch(100% 0 0);

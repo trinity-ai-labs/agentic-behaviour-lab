@@ -9,67 +9,81 @@
  * before first paint so there is no flash; this module takes over afterward
  * for in-app toggling.
  */
-import { createContext, createEffect, createSignal, onCleanup, useContext, type JSX } from "solid-js"
+import {
+  createContext,
+  createEffect,
+  createSignal,
+  onCleanup,
+  useContext,
+  type JSX,
+} from 'solid-js';
 
-export type ThemeId = "rime" | "ledger"
-export type SchemeId = "dark" | "light"
+export type ThemeId = 'rime' | 'ledger';
+export type SchemeId = 'dark' | 'light';
 
-const THEME_KEY = "abl-theme"
-const SCHEME_KEY = "abl-scheme"
+const THEME_KEY = 'abl-theme';
+const SCHEME_KEY = 'abl-scheme';
 
 const readStoredTheme = (): ThemeId => {
-  const stored = localStorage.getItem(THEME_KEY)
-  return stored === "rime" || stored === "ledger" ? stored : "rime"
-}
+  const stored = localStorage.getItem(THEME_KEY);
+  return stored === 'rime' || stored === 'ledger' ? stored : 'rime';
+};
 
 /** `undefined` means "no explicit override yet — follow the OS". */
 const readStoredScheme = (): SchemeId | undefined => {
-  const stored = localStorage.getItem(SCHEME_KEY)
-  return stored === "dark" || stored === "light" ? stored : undefined
-}
+  const stored = localStorage.getItem(SCHEME_KEY);
+  return stored === 'dark' || stored === 'light' ? stored : undefined;
+};
 
-const systemPrefersLight = (): boolean => window.matchMedia("(prefers-color-scheme: light)").matches
+const systemPrefersLight = (): boolean =>
+  window.matchMedia('(prefers-color-scheme: light)').matches;
 
 export interface ThemeContextValue {
-  readonly theme: () => ThemeId
-  readonly scheme: () => SchemeId
-  readonly setTheme: (theme: ThemeId) => void
-  readonly setScheme: (scheme: SchemeId) => void
+  readonly theme: () => ThemeId;
+  readonly scheme: () => SchemeId;
+  readonly setTheme: (theme: ThemeId) => void;
+  readonly setScheme: (scheme: SchemeId) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue>()
+const ThemeContext = createContext<ThemeContextValue>();
 
 export const useTheme = (): ThemeContextValue => {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider")
-  return ctx
-}
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
+};
 
 export const ThemeProvider = (props: { children?: JSX.Element }) => {
-  const [theme, setThemeSignal] = createSignal<ThemeId>(readStoredTheme())
-  const [explicitScheme, setExplicitScheme] = createSignal<SchemeId | undefined>(readStoredScheme())
-  const [systemScheme, setSystemScheme] = createSignal<SchemeId>(systemPrefersLight() ? "light" : "dark")
+  const [theme, setThemeSignal] = createSignal<ThemeId>(readStoredTheme());
+  const [explicitScheme, setExplicitScheme] = createSignal<SchemeId | undefined>(
+    readStoredScheme(),
+  );
+  const [systemScheme, setSystemScheme] = createSignal<SchemeId>(
+    systemPrefersLight() ? 'light' : 'dark',
+  );
 
-  const media = window.matchMedia("(prefers-color-scheme: light)")
-  const onSystemChange = (e: MediaQueryListEvent) => setSystemScheme(e.matches ? "light" : "dark")
-  media.addEventListener("change", onSystemChange)
-  onCleanup(() => media.removeEventListener("change", onSystemChange))
+  const media = window.matchMedia('(prefers-color-scheme: light)');
+  const onSystemChange = (e: MediaQueryListEvent) => setSystemScheme(e.matches ? 'light' : 'dark');
+  media.addEventListener('change', onSystemChange);
+  onCleanup(() => media.removeEventListener('change', onSystemChange));
 
-  const scheme = (): SchemeId => explicitScheme() ?? systemScheme()
+  const scheme = (): SchemeId => explicitScheme() ?? systemScheme();
 
-  createEffect(() => document.documentElement.setAttribute("data-theme", theme()))
-  createEffect(() => document.documentElement.setAttribute("data-scheme", scheme()))
+  createEffect(() => document.documentElement.setAttribute('data-theme', theme()));
+  createEffect(() => document.documentElement.setAttribute('data-scheme', scheme()));
 
   const setTheme = (next: ThemeId) => {
-    setThemeSignal(next)
-    localStorage.setItem(THEME_KEY, next)
-  }
+    setThemeSignal(next);
+    localStorage.setItem(THEME_KEY, next);
+  };
   const setScheme = (next: SchemeId) => {
-    setExplicitScheme(next)
-    localStorage.setItem(SCHEME_KEY, next)
-  }
+    setExplicitScheme(next);
+    localStorage.setItem(SCHEME_KEY, next);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, scheme, setTheme, setScheme }}>{props.children}</ThemeContext.Provider>
-  )
-}
+    <ThemeContext.Provider value={{ theme, scheme, setTheme, setScheme }}>
+      {props.children}
+    </ThemeContext.Provider>
+  );
+};

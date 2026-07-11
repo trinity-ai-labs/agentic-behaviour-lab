@@ -60,15 +60,15 @@
   --text-3xl: 2.75rem;
 
   /* ---- font stacks: IBM Plex Sans (UI/prose) + IBM Plex Mono (all data) ---- */
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
 /* `color-scheme` follows the scheme axis so native controls (scrollbars,
    form widgets) render correctly regardless of which theme is active. */
-[data-scheme="dark"] {
+[data-scheme='dark'] {
   color-scheme: dark;
 }
-[data-scheme="light"] {
+[data-scheme='light'] {
   color-scheme: light;
 }

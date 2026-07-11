@@ -4,12 +4,12 @@
  * account/scope prefixing (solo local-first tool, no auth) — keys are just
  * the query family plus its narrowing args.
  */
-import type { ResultsFilter } from "../api/client"
+import type { ResultsFilter } from '../api/client';
 
 export const queryKeys = {
-  scenarios: () => ["scenarios"] as const,
-  runs: () => ["runs"] as const,
-  run: (runId: string) => ["runs", runId] as const,
-  results: (filter: ResultsFilter = {}) => ["results", filter] as const,
-  trial: (trialId: string) => ["trials", trialId] as const,
-}
+  scenarios: () => ['scenarios'] as const,
+  runs: () => ['runs'] as const,
+  run: (runId: string) => ['runs', runId] as const,
+  results: (filter: ResultsFilter = {}) => ['results', filter] as const,
+  trial: (trialId: string) => ['trials', trialId] as const,
+};

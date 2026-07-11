@@ -29,15 +29,15 @@
   border: 1px solid var(--verdict-ring);
 }
 
-.swatch[data-verdict="pass"] {
+.swatch[data-verdict='pass'] {
   background: var(--verdict-pass);
 }
-.swatch[data-verdict="fail"] {
+.swatch[data-verdict='fail'] {
   background: var(--verdict-fail);
 }
-.swatch[data-verdict="inconclusive"] {
+.swatch[data-verdict='inconclusive'] {
   background: var(--verdict-inconclusive);
 }
-.swatch[data-verdict="error"] {
+.swatch[data-verdict='error'] {
   background: var(--verdict-error);
 }

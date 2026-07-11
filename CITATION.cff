@@ -1,10 +1,10 @@
 cff-version: 1.2.0
-message: "If you build on these findings, please cite this repository."
-title: "Agentic Behaviour Lab"
+message: 'If you build on these findings, please cite this repository.'
+title: 'Agentic Behaviour Lab'
 authors:
-  - name: "Trinity AI Labs"
-repository-code: "https://github.com/trinity-ai-labs/agentic-behaviour-lab"
-url: "https://github.com/trinity-ai-labs/agentic-behaviour-lab"
+  - name: 'Trinity AI Labs'
+repository-code: 'https://github.com/trinity-ai-labs/agentic-behaviour-lab'
+url: 'https://github.com/trinity-ai-labs/agentic-behaviour-lab'
 license: MIT
 keywords:
   - ai-agents

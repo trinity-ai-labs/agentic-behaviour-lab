@@ -10,7 +10,7 @@ nobody has measured. This lab exists to replace that folklore with numbers.
 
 Individual experiments (like 001) answer a question once. The end state is a
 **behavioural benchmark suite**: versioned, hermetic scenarios that can be
-re-run against any *subject* — and produce comparable rates over time.
+re-run against any _subject_ — and produce comparable rates over time.
 
 A benchmark run is a point in a three-way matrix:
 
@@ -46,8 +46,8 @@ same scenario must be runnable across all of them):
 obedience, skill adherence and routing bind-strength, instruction retention,
 injection-defense false positives, and whatever each new incident teaches us.
 
-The question form this unlocks: *"does this prompt behave differently as a
-one-shot than inside the pipeline it actually ships in?"* — which is exactly
+The question form this unlocks: _"does this prompt behave differently as a
+one-shot than inside the pipeline it actually ships in?"_ — which is exactly
 the regression check a prompt change should get before it ships. CI for
 behaviour.
 
@@ -64,7 +64,7 @@ behaviour.
   our summaries.
 - **Guardrails as hypotheses.** A countermeasure isn't adopted because it
   sounds right; it's adopted because it moved the rate in a controlled
-  comparison — and the finding says *where* it belongs (workflow doc, brief,
+  comparison — and the finding says _where_ it belongs (workflow doc, brief,
   tool output, or mechanical prevention).
 - **Findings that survived surprise.** When a probe misbehaves (see 001's
   C2-r1: a probe refused because a shadowed shell builtin corrupted its one
@@ -73,7 +73,7 @@ behaviour.
   sessions, so after the behaviour is measured we can interview the agent in
   its own context: "why did you stop there? what in the brief was ambiguous?
   what would have changed your decision?" Self-reports are
-  confabulation-prone, so interview answers are *hypothesis generators* for
+  confabulation-prone, so interview answers are _hypothesis generators_ for
   prompt changes — never findings by themselves. The loop this enables is
   prompt tuning with the benchmark as the fitness function: run → interview
   failures → mutate the prompt against reported confusions → re-run → keep

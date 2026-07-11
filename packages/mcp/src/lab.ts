@@ -21,9 +21,9 @@ import {
   type RunRecord,
   type TrialRecord,
   type VerdictOutcome,
-} from "@abl/engine"
-import { FileSystem, Path } from "@effect/platform"
-import { Cause, Data, Effect, Exit, Fiber } from "effect"
+} from '@abl/engine';
+import { FileSystem, Path } from '@effect/platform';
+import { Cause, Data, Effect, Exit, Fiber } from 'effect';
 
 // ---------------------------------------------------------------------------
 // Scenario discovery
@@ -34,8 +34,8 @@ import { Cause, Data, Effect, Exit, Fiber } from "effect"
  * which only mean something to the runner on this machine.
  */
 export const listScenarios = Effect.gen(function* () {
-  const repo = yield* ScenarioRepo
-  const definitions = yield* repo.list
+  const repo = yield* ScenarioRepo;
+  const definitions = yield* repo.list;
   return definitions.map((definition) => ({
     scenarioId: definition.scenarioId,
     version: definition.version,
@@ -44,37 +44,39 @@ export const listScenarios = Effect.gen(function* () {
     description: definition.description,
     conditions: definition.conditions,
     declaredShapes: definition.declaredShapes,
-  }))
-})
+  }));
+});
 
 // ---------------------------------------------------------------------------
 // Run registry — fire-and-poll
 // ---------------------------------------------------------------------------
 
 export interface RunHandle {
-  readonly runId: string
+  readonly runId: string;
 }
 
 export interface TrialProgress {
-  readonly trialId: string
-  readonly condition: string
-  readonly modelId: string
-  readonly harness: string
-  readonly outcome: VerdictOutcome
+  readonly trialId: string;
+  readonly condition: string;
+  readonly modelId: string;
+  readonly harness: string;
+  readonly outcome: VerdictOutcome;
 }
 
 export interface RunStatus {
-  readonly run: RunRecord
-  readonly plannedTrials: number
-  readonly completedTrials: number
-  readonly cells: ReadonlyArray<CellSummary>
-  readonly trials: ReadonlyArray<TrialProgress>
-  readonly batchError?: string | undefined
+  readonly run: RunRecord;
+  readonly plannedTrials: number;
+  readonly completedTrials: number;
+  readonly cells: ReadonlyArray<CellSummary>;
+  readonly trials: ReadonlyArray<TrialProgress>;
+  readonly batchError?: string | undefined;
 }
 
 export interface RunRegistry {
-  readonly launchRun: (config: RunConfig) => Effect.Effect<RunHandle, RunBatchError, Runner | ArtifactStore>
-  readonly runStatus: (runId: string) => Effect.Effect<RunStatus, StoreError, ArtifactStore>
+  readonly launchRun: (
+    config: RunConfig,
+  ) => Effect.Effect<RunHandle, RunBatchError, Runner | ArtifactStore>;
+  readonly runStatus: (runId: string) => Effect.Effect<RunStatus, StoreError, ArtifactStore>;
 }
 
 /**
@@ -85,8 +87,8 @@ export interface RunRegistry {
  * whatever protocol they serve.
  */
 export const makeRunRegistry = (): RunRegistry => {
-  const running = new Map<string, Fiber.RuntimeFiber<RunRecord, RunBatchError>>()
-  const launchGate = Effect.unsafeMakeSemaphore(1)
+  const running = new Map<string, Fiber.RuntimeFiber<RunRecord, RunBatchError>>();
+  const launchGate = Effect.unsafeMakeSemaphore(1);
 
   /**
    * Forks a batch onto a daemon fiber and returns its runId without waiting
@@ -95,23 +97,23 @@ export const makeRunRegistry = (): RunRegistry => {
    * the runId is recovered by snapshotting the store's run ids before the
    * fork and watching for the one new id.
    */
-  const launchRun: RunRegistry["launchRun"] = (config) =>
+  const launchRun: RunRegistry['launchRun'] = (config) =>
     launchGate.withPermits(1)(
       Effect.gen(function* () {
-        const store = yield* ArtifactStore
-        const runner = yield* Runner
+        const store = yield* ArtifactStore;
+        const runner = yield* Runner;
 
-        const before = new Set(yield* store.listRunIds)
-        const fiber = yield* Effect.forkDaemon(runner.runBatch(config))
+        const before = new Set(yield* store.listRunIds);
+        const fiber = yield* Effect.forkDaemon(runner.runBatch(config));
 
         const detectNewRun = Effect.gen(function* () {
           while (true) {
-            const ids = yield* store.listRunIds
-            const fresh = ids.find((id) => !before.has(id))
-            if (fresh !== undefined) return fresh
-            yield* Effect.sleep("25 millis")
+            const ids = yield* store.listRunIds;
+            const fresh = ids.find((id) => !before.has(id));
+            if (fresh !== undefined) return fresh;
+            yield* Effect.sleep('25 millis');
           }
-        })
+        });
 
         // A batch that fails before writing its run record (unknown scenario,
         // bad condition label) would leave the detector polling forever, so
@@ -121,35 +123,36 @@ export const makeRunRegistry = (): RunRegistry => {
         const runId = yield* Effect.raceFirst(
           detectNewRun,
           Fiber.join(fiber).pipe(Effect.map((run) => run.runId)),
-        )
-        running.set(runId, fiber)
-        return { runId }
+        );
+        running.set(runId, fiber);
+        return { runId };
       }),
-    )
+    );
 
   /**
    * A run's record plus progress derived from its trial files: planned vs
    * completed counts, per-cell summaries, and per-trial outcomes (the ids an
    * agent needs to call `lab_get_trial`).
    */
-  const runStatus: RunRegistry["runStatus"] = (runId) =>
+  const runStatus: RunRegistry['runStatus'] = (runId) =>
     Effect.gen(function* () {
-      const store = yield* ArtifactStore
+      const store = yield* ArtifactStore;
       const [run, trials] = yield* Effect.all([store.readRun(runId), readRunTrials(store, runId)], {
         concurrency: 2,
-      })
+      });
 
       // Once run.json is terminal the batch's outcome is fully on disk and
       // the fiber handle can be dropped. A batch that died mid-run instead
       // leaves run.json at "running" forever, so its fiber stays registered:
       // the exit is the only evidence, and the reported status is downgraded
       // to "aborted" from it.
-      if (run.status !== "running") running.delete(runId)
-      const exit = run.status === "running" ? (running.get(runId)?.unsafePoll() ?? null) : null
-      const batchError = exit !== null && Exit.isFailure(exit) ? Cause.pretty(exit.cause) : undefined
+      if (run.status !== 'running') running.delete(runId);
+      const exit = run.status === 'running' ? (running.get(runId)?.unsafePoll() ?? null) : null;
+      const batchError =
+        exit !== null && Exit.isFailure(exit) ? Cause.pretty(exit.cause) : undefined;
 
       return {
-        run: batchError !== undefined ? { ...run, status: "aborted" as const } : run,
+        run: batchError !== undefined ? { ...run, status: 'aborted' as const } : run,
         plannedTrials:
           run.config.conditions.length *
           run.config.models.length *
@@ -165,23 +168,23 @@ export const makeRunRegistry = (): RunRegistry => {
           outcome: trial.verdict.outcome,
         })),
         batchError,
-      }
-    })
+      };
+    });
 
-  return { launchRun, runStatus }
-}
+  return { launchRun, runStatus };
+};
 
 // ---------------------------------------------------------------------------
 // Results — cell summaries
 // ---------------------------------------------------------------------------
 
 export interface ResultsFilter {
-  readonly scenarioId?: string | undefined
-  readonly runId?: string | undefined
-  readonly models?: ReadonlyArray<string> | undefined
-  readonly conditions?: ReadonlyArray<string> | undefined
+  readonly scenarioId?: string | undefined;
+  readonly runId?: string | undefined;
+  readonly models?: ReadonlyArray<string> | undefined;
+  readonly conditions?: ReadonlyArray<string> | undefined;
   /** Fingerprint harness strings (as reported in cell rows), e.g. "claude-code/2.1.206 (headless -p)". */
-  readonly harnesses?: ReadonlyArray<string> | undefined
+  readonly harnesses?: ReadonlyArray<string> | undefined;
 }
 
 /**
@@ -203,37 +206,37 @@ export const results = (
         ? summarizeCells(yield* readRunTrials(yield* ArtifactStore, filter.runId))
         : yield* (yield* TrialIndex).cellSummaries(
             filter.scenarioId !== undefined ? { scenarioId: filter.scenarioId } : undefined,
-          )
+          );
     return cells.filter(
       (cell) =>
         (filter.scenarioId === undefined || cell.scenarioId === filter.scenarioId) &&
         (filter.models === undefined || filter.models.includes(cell.modelId)) &&
         (filter.conditions === undefined || filter.conditions.includes(cell.condition)) &&
         (filter.harnesses === undefined || filter.harnesses.includes(cell.harness)),
-    )
-  })
+    );
+  });
 
 // ---------------------------------------------------------------------------
 // Single trial — record + inlined artifacts
 // ---------------------------------------------------------------------------
 
-export class TrialNotFound extends Data.TaggedError("TrialNotFound")<{
-  readonly trialId: string
+export class TrialNotFound extends Data.TaggedError('TrialNotFound')<{
+  readonly trialId: string;
 }> {}
 
 /** Per-artifact inline cap: enough for final messages and state logs, bounded because an agent context is the consumer. */
-const ARTIFACT_INLINE_CAP = 16 * 1024
+const ARTIFACT_INLINE_CAP = 16 * 1024;
 
 export interface InlinedArtifact {
-  readonly path: string
-  readonly sizeBytes: number
-  readonly content: string
-  readonly truncated: boolean
+  readonly path: string;
+  readonly sizeBytes: number;
+  readonly content: string;
+  readonly truncated: boolean;
 }
 
 export interface TrialDetail {
-  readonly trial: TrialRecord
-  readonly artifacts: Readonly<Record<string, InlinedArtifact>>
+  readonly trial: TrialRecord;
+  readonly artifacts: Readonly<Record<string, InlinedArtifact>>;
 }
 
 /**
@@ -244,39 +247,51 @@ export interface TrialDetail {
 export const getTrial = (
   trialId: string,
   runId?: string,
-): Effect.Effect<TrialDetail, StoreError | TrialNotFound, ArtifactStore | FileSystem.FileSystem | Path.Path> =>
+): Effect.Effect<
+  TrialDetail,
+  StoreError | TrialNotFound,
+  ArtifactStore | FileSystem.FileSystem | Path.Path
+> =>
   Effect.gen(function* () {
-    const store = yield* ArtifactStore
-    const fs = yield* FileSystem.FileSystem
-    const path = yield* Path.Path
+    const store = yield* ArtifactStore;
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
 
-    const trial = runId !== undefined ? yield* store.readTrial(runId, trialId) : yield* findTrial(store, trialId)
+    const trial =
+      runId !== undefined
+        ? yield* store.readTrial(runId, trialId)
+        : yield* findTrial(store, trialId);
 
-    const dir = store.trialDir(trial.runId, trial.trialId)
+    const dir = store.trialDir(trial.runId, trial.trialId);
     const entries = yield* Effect.forEach(
       Object.entries(trial.artifacts),
       ([name, relPath]) => {
-        const file = path.join(dir, relPath)
+        const file = path.join(dir, relPath);
         return fs.readFileString(file).pipe(
-          Effect.mapError((cause) => new StoreError({ operation: "readArtifact", path: file, cause })),
+          Effect.mapError(
+            (cause) => new StoreError({ operation: 'readArtifact', path: file, cause }),
+          ),
           Effect.map(
             (content) =>
               [
                 name,
                 {
                   path: relPath,
-                  sizeBytes: Buffer.byteLength(content, "utf8"),
-                  content: content.length > ARTIFACT_INLINE_CAP ? content.slice(0, ARTIFACT_INLINE_CAP) : content,
+                  sizeBytes: Buffer.byteLength(content, 'utf8'),
+                  content:
+                    content.length > ARTIFACT_INLINE_CAP
+                      ? content.slice(0, ARTIFACT_INLINE_CAP)
+                      : content,
                   truncated: content.length > ARTIFACT_INLINE_CAP,
                 },
               ] as const,
           ),
-        )
+        );
       },
       { concurrency: 8 },
-    )
-    return { trial, artifacts: Object.fromEntries(entries) }
-  })
+    );
+    return { trial, artifacts: Object.fromEntries(entries) };
+  });
 
 const findTrial = (
   store: ArtifactStoreShape,
@@ -284,11 +299,11 @@ const findTrial = (
 ): Effect.Effect<TrialRecord, StoreError | TrialNotFound> =>
   Effect.gen(function* () {
     for (const runId of yield* store.listRunIds) {
-      const trialIds = yield* store.listTrialIds(runId)
-      if (trialIds.includes(trialId)) return yield* store.readTrial(runId, trialId)
+      const trialIds = yield* store.listTrialIds(runId);
+      if (trialIds.includes(trialId)) return yield* store.readTrial(runId, trialId);
     }
-    return yield* Effect.fail(new TrialNotFound({ trialId }))
-  })
+    return yield* Effect.fail(new TrialNotFound({ trialId }));
+  });
 
 // ---------------------------------------------------------------------------
 // Shared read-side helpers
@@ -304,18 +319,18 @@ const readRunTrials = (
       Effect.flatMap((trialIds) =>
         Effect.forEach(trialIds, (trialId) => store.readTrial(runId, trialId), { concurrency: 16 }),
       ),
-    )
+    );
 
 interface CellAccumulator {
-  readonly scenarioId: string
-  readonly condition: string
-  readonly modelId: string
-  readonly harness: string
-  readonly shape: ExecutionShape
-  pass: number
-  fail: number
-  inconclusive: number
-  error: number
+  readonly scenarioId: string;
+  readonly condition: string;
+  readonly modelId: string;
+  readonly harness: string;
+  readonly shape: ExecutionShape;
+  pass: number;
+  fail: number;
+  inconclusive: number;
+  error: number;
 }
 
 /**
@@ -325,10 +340,10 @@ interface CellAccumulator {
  * exist.
  */
 const summarizeCells = (trials: ReadonlyArray<TrialRecord>): Array<CellSummary> => {
-  const cells = new Map<string, CellAccumulator>()
+  const cells = new Map<string, CellAccumulator>();
   for (const trial of trials) {
-    const key = `${trial.scenarioId} ${trial.condition.label} ${trial.fingerprint.modelId} ${trial.fingerprint.harness} ${trial.shape}`
-    let cell = cells.get(key)
+    const key = `${trial.scenarioId} ${trial.condition.label} ${trial.fingerprint.modelId} ${trial.fingerprint.harness} ${trial.shape}`;
+    let cell = cells.get(key);
     if (cell === undefined) {
       cell = {
         scenarioId: trial.scenarioId,
@@ -340,20 +355,18 @@ const summarizeCells = (trials: ReadonlyArray<TrialRecord>): Array<CellSummary> 
         fail: 0,
         inconclusive: 0,
         error: 0,
-      }
-      cells.set(key, cell)
+      };
+      cells.set(key, cell);
     }
-    cell[trial.verdict.outcome] += 1
+    cell[trial.verdict.outcome] += 1;
   }
   const sortKey = (cell: CellAccumulator): string =>
-    `${cell.scenarioId} ${cell.condition} ${cell.modelId} ${cell.harness} ${cell.shape}`
+    `${cell.scenarioId} ${cell.condition} ${cell.modelId} ${cell.harness} ${cell.shape}`;
   return [...cells.values()]
     .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
-    .map(
-      (cell): CellSummary => ({
-        ...cell,
-        trials: cell.pass + cell.fail + cell.inconclusive + cell.error,
-        failRate: cell.pass + cell.fail > 0 ? cell.fail / (cell.pass + cell.fail) : null,
-      }),
-    )
-}
+    .map((cell): CellSummary => ({
+      ...cell,
+      trials: cell.pass + cell.fail + cell.inconclusive + cell.error,
+      failRate: cell.pass + cell.fail > 0 ? cell.fail / (cell.pass + cell.fail) : null,
+    }));
+};

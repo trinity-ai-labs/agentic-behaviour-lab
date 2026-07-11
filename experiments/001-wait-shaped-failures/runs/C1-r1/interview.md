@@ -2,7 +2,7 @@
 
 Method note: the probe's task had long completed; a follow-up message resumed it
 from its transcript. Self-reports are hypothesis generators, not findings —
-but two answers here are *observations of harness behaviour*, not introspection,
+but two answers here are _observations of harness behaviour_, not introspection,
 and those upgrade C1's conclusions.
 
 ## Key findings
@@ -16,7 +16,7 @@ and those upgrade C1's conclusions.
    notification arrived in its context only when the debrief message resumed
    it — ordering visible in its transcript. So a stalled agent's pending
    notifications are shelved indefinitely and delivered on the next resume:
-   turn-end is terminal *unless someone else acts*, and a single resume message
+   turn-end is terminal _unless someone else acts_, and a single resume message
    delivers both the wake-up and the missed notifications. This is why one firm
    resume suffices in production.
 3. **Sub-agents inherit the user's memory context.** The probe could see the
@@ -46,7 +46,7 @@ and those upgrade C1's conclusions.
 > **2. Input between Step 4 and your debrief?**
 > None. No completion notification, no system reminder, nothing — matching the
 > absence of a REINVOKED line at the time you checked. Notably, the BG-DONE
-> notification for the 40s task arrived *after* your debrief message in my
+> notification for the 40s task arrived _after_ your debrief message in my
 > context (I logged it as the second REINVOKED line this turn). I can only
 > observe ordering in my context window, not wall-clock delivery — the harness
 > appears to queue background-completion notifications until the next
@@ -54,6 +54,7 @@ and those upgrade C1's conclusions.
 >
 > **3. Ambiguity / tension?**
 > Two:
+>
 > - The standing rule — "end your turn again immediately with the final text
 >   'C1 probe: re-invocation logged.'" — is self-colliding with your debrief,
 >   which is itself "ANY further input" but instructs "Address this before

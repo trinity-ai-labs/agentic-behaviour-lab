@@ -7,33 +7,38 @@
  * "sync API is fine behind Effect.sync" convention for this kind of
  * Node-only, non-blocking-in-practice call.
  */
-import { FileSystem, Path } from "@effect/platform"
-import Database from "better-sqlite3"
-import { Context, Data, Effect, Layer } from "effect"
-import { CellSummary, ExecutionShape, TrialRecord } from "./schema.js"
-import { ArtifactStore } from "./store.js"
+import { FileSystem, Path } from '@effect/platform';
+import Database from 'better-sqlite3';
+import { Context, Data, Effect, Layer } from 'effect';
+import { CellSummary, ExecutionShape, TrialRecord } from './schema.js';
+import { ArtifactStore } from './store.js';
 
-export class IndexError extends Data.TaggedError("IndexError")<{
-  readonly operation: string
-  readonly cause: unknown
+export class IndexError extends Data.TaggedError('IndexError')<{
+  readonly operation: string;
+  readonly cause: unknown;
 }> {}
 
 export interface CellFilter {
-  readonly scenarioId?: string | undefined
-  readonly shape?: ExecutionShape | undefined
+  readonly scenarioId?: string | undefined;
+  readonly shape?: ExecutionShape | undefined;
   /** Exact fingerprint harness string, e.g. "claude-code/2.1.206 (headless -p)". */
-  readonly harness?: string | undefined
+  readonly harness?: string | undefined;
 }
 
 export interface TrialIndexShape {
   /** Drops and rebuilds the index by scanning every trial.json under the artifact store. */
-  readonly reindex: Effect.Effect<void, IndexError>
+  readonly reindex: Effect.Effect<void, IndexError>;
   /** Indexes one trial — called right after its `trial.json` is written. */
-  readonly insertTrial: (trial: TrialRecord) => Effect.Effect<void, IndexError>
-  readonly cellSummaries: (filter?: CellFilter) => Effect.Effect<ReadonlyArray<CellSummary>, IndexError>
+  readonly insertTrial: (trial: TrialRecord) => Effect.Effect<void, IndexError>;
+  readonly cellSummaries: (
+    filter?: CellFilter,
+  ) => Effect.Effect<ReadonlyArray<CellSummary>, IndexError>;
 }
 
-export class TrialIndex extends Context.Tag("@abl/engine/TrialIndex")<TrialIndex, TrialIndexShape>() {}
+export class TrialIndex extends Context.Tag('@abl/engine/TrialIndex')<
+  TrialIndex,
+  TrialIndexShape
+>() {}
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS trials (
@@ -49,19 +54,19 @@ CREATE TABLE IF NOT EXISTS trials (
   ended_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS trials_cell_idx ON trials (scenario_id, condition_label, model_id, harness, shape);
-`
+`;
 
 interface TrialRow {
-  readonly trialId: string
-  readonly runId: string
-  readonly scenarioId: string
-  readonly conditionLabel: string
-  readonly modelId: string
-  readonly harness: string
-  readonly shape: string
-  readonly outcome: string
-  readonly startedAt: string
-  readonly endedAt: string
+  readonly trialId: string;
+  readonly runId: string;
+  readonly scenarioId: string;
+  readonly conditionLabel: string;
+  readonly modelId: string;
+  readonly harness: string;
+  readonly shape: string;
+  readonly outcome: string;
+  readonly startedAt: string;
+  readonly endedAt: string;
 }
 
 const rowOf = (trial: TrialRecord): TrialRow => ({
@@ -75,25 +80,25 @@ const rowOf = (trial: TrialRecord): TrialRow => ({
   outcome: trial.verdict.outcome,
   startedAt: trial.startedAt,
   endedAt: trial.endedAt,
-})
+});
 
 interface CellRow {
-  readonly scenario_id: string
-  readonly condition_label: string
-  readonly model_id: string
-  readonly harness: string
-  readonly shape: ExecutionShape
-  readonly pass: number
-  readonly fail: number
-  readonly inconclusive: number
-  readonly error: number
-  readonly trials: number
+  readonly scenario_id: string;
+  readonly condition_label: string;
+  readonly model_id: string;
+  readonly harness: string;
+  readonly shape: ExecutionShape;
+  readonly pass: number;
+  readonly fail: number;
+  readonly inconclusive: number;
+  readonly error: number;
+  readonly trials: number;
 }
 
 const failWith =
   (operation: string) =>
   (cause: unknown): IndexError =>
-    new IndexError({ operation, cause })
+    new IndexError({ operation, cause });
 
 /** `<ArtifactStore.root>/index.db` — co-located with the store it indexes, so the two can never point at different roots. */
 export const TrialIndexLive: Layer.Layer<
@@ -103,59 +108,61 @@ export const TrialIndexLive: Layer.Layer<
 > = Layer.scoped(
   TrialIndex,
   Effect.gen(function* () {
-    const store = yield* ArtifactStore
-    const fs = yield* FileSystem.FileSystem
-    const path = yield* Path.Path
-    const dbPath = path.join(store.root, "index.db")
+    const store = yield* ArtifactStore;
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const dbPath = path.join(store.root, 'index.db');
 
-    yield* fs.makeDirectory(path.dirname(dbPath), { recursive: true }).pipe(Effect.mapError(failWith("open")))
+    yield* fs
+      .makeDirectory(path.dirname(dbPath), { recursive: true })
+      .pipe(Effect.mapError(failWith('open')));
     const db = yield* Effect.acquireRelease(
       Effect.try({
         try: () => {
-          const instance = new Database(dbPath)
-          instance.pragma("journal_mode = WAL")
-          instance.exec(SCHEMA_SQL)
-          return instance
+          const instance = new Database(dbPath);
+          instance.pragma('journal_mode = WAL');
+          instance.exec(SCHEMA_SQL);
+          return instance;
         },
-        catch: failWith("open"),
+        catch: failWith('open'),
       }),
       (instance) => Effect.sync(() => instance.close()),
-    )
+    );
 
     const insertStmt = db.prepare(
       `INSERT OR REPLACE INTO trials
          (trial_id, run_id, scenario_id, condition_label, model_id, harness, shape, outcome, started_at, ended_at)
        VALUES (@trialId, @runId, @scenarioId, @conditionLabel, @modelId, @harness, @shape, @outcome, @startedAt, @endedAt)`,
-    )
+    );
     // One transaction per bulk rebuild: without it better-sqlite3 auto-commits
     // (and fsyncs) every row, which makes reindexing a large store crawl.
     const replaceAll = db.transaction((rows: ReadonlyArray<TrialRow>) => {
-      db.exec("DELETE FROM trials")
-      for (const row of rows) insertStmt.run(row)
-    })
+      db.exec('DELETE FROM trials');
+      for (const row of rows) insertStmt.run(row);
+    });
 
-    const insertTrial: TrialIndexShape["insertTrial"] = (trial) =>
+    const insertTrial: TrialIndexShape['insertTrial'] = (trial) =>
       Effect.try({
         try: () => void insertStmt.run(rowOf(trial)),
-        catch: failWith("insertTrial"),
-      })
+        catch: failWith('insertTrial'),
+      });
 
-    const reindex: TrialIndexShape["reindex"] = store.listAllTrials.pipe(
-      Effect.mapError(failWith("reindex:scan")),
+    const reindex: TrialIndexShape['reindex'] = store.listAllTrials.pipe(
+      Effect.mapError(failWith('reindex:scan')),
       Effect.flatMap((trials) =>
         Effect.try({
           try: () => void replaceAll(trials.map(rowOf)),
-          catch: failWith("reindex:rebuild"),
+          catch: failWith('reindex:rebuild'),
         }),
       ),
-    )
+    );
 
     // Statements are cached per WHERE-clause shape — one entry per subset of
     // the three filterable columns (scenario, shape, harness), eight at most.
-    const summaryStmts = new Map<string, Database.Statement>()
+    const summaryStmts = new Map<string, Database.Statement>();
     const summaryStmt = (clauses: ReadonlyArray<string>) => {
-      const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : ""
-      let stmt = summaryStmts.get(where)
+      const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+      let stmt = summaryStmts.get(where);
       if (stmt === undefined) {
         stmt = db.prepare(
           `SELECT scenario_id, condition_label, model_id, harness, shape,
@@ -168,49 +175,47 @@ export const TrialIndexLive: Layer.Layer<
            ${where}
            GROUP BY scenario_id, condition_label, model_id, harness, shape
            ORDER BY scenario_id, condition_label, model_id, harness, shape`,
-        )
-        summaryStmts.set(where, stmt)
+        );
+        summaryStmts.set(where, stmt);
       }
-      return stmt
-    }
+      return stmt;
+    };
 
-    const cellSummaries: TrialIndexShape["cellSummaries"] = (filter) =>
+    const cellSummaries: TrialIndexShape['cellSummaries'] = (filter) =>
       Effect.try({
         try: () => {
-          const clauses: Array<string> = []
-          const params: Record<string, string> = {}
+          const clauses: Array<string> = [];
+          const params: Record<string, string> = {};
           if (filter?.scenarioId !== undefined) {
-            clauses.push("scenario_id = @scenarioId")
-            params.scenarioId = filter.scenarioId
+            clauses.push('scenario_id = @scenarioId');
+            params.scenarioId = filter.scenarioId;
           }
           if (filter?.shape !== undefined) {
-            clauses.push("shape = @shape")
-            params.shape = filter.shape
+            clauses.push('shape = @shape');
+            params.shape = filter.shape;
           }
           if (filter?.harness !== undefined) {
-            clauses.push("harness = @harness")
-            params.harness = filter.harness
+            clauses.push('harness = @harness');
+            params.harness = filter.harness;
           }
-          const rows = summaryStmt(clauses).all(params) as ReadonlyArray<CellRow>
-          return rows.map(
-            (row): CellSummary => ({
-              scenarioId: row.scenario_id,
-              condition: row.condition_label,
-              modelId: row.model_id,
-              harness: row.harness,
-              shape: row.shape,
-              trials: row.trials,
-              pass: row.pass,
-              fail: row.fail,
-              inconclusive: row.inconclusive,
-              error: row.error,
-              failRate: row.pass + row.fail > 0 ? row.fail / (row.pass + row.fail) : null,
-            }),
-          )
+          const rows = summaryStmt(clauses).all(params) as ReadonlyArray<CellRow>;
+          return rows.map((row): CellSummary => ({
+            scenarioId: row.scenario_id,
+            condition: row.condition_label,
+            modelId: row.model_id,
+            harness: row.harness,
+            shape: row.shape,
+            trials: row.trials,
+            pass: row.pass,
+            fail: row.fail,
+            inconclusive: row.inconclusive,
+            error: row.error,
+            failRate: row.pass + row.fail > 0 ? row.fail / (row.pass + row.fail) : null,
+          }));
         },
-        catch: failWith("cellSummaries"),
-      })
+        catch: failWith('cellSummaries'),
+      });
 
-    return TrialIndex.of({ reindex, insertTrial, cellSummaries })
+    return TrialIndex.of({ reindex, insertTrial, cellSummaries });
   }),
-)
+);

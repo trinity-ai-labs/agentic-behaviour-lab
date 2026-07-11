@@ -19,8 +19,8 @@ have observed two recurring failure shapes that are mirror images of each other:
 
 2. **An orchestrator waited (refused to act) when it should have acted.** It
    declined to enqueue a gate ticket / start a queue drain because the gate was
-   "being held" — conflating the machine-wide *execution slot* (which serializes
-   gate runs inside the runner) with a *lock on the queue itself*. The queue's
+   "being held" — conflating the machine-wide _execution slot_ (which serializes
+   gate runs inside the runner) with a _lock on the queue itself_. The queue's
    entire design point is that enqueue and drain are always safe: state
    transitions are atomic, concurrent drains are supported, tickets are durable.
    The agent substituted a generic "resource contention → back off" instinct for
@@ -53,10 +53,10 @@ of that empirically.
 ## Tier C — harness-semantics probes (deterministic; few runs each)
 
 - **C1. Is a nested agent's turn-end final?** A top-level session is re-invoked
-  when its background work completes. Does a *sub-agent* that ends its turn with
+  when its background work completes. Does a _sub-agent_ that ends its turn with
   a backgrounded shell task in flight ever get re-invoked — or is its turn-end
   terminal ("sleep forever")?
-- **C2. Same question for a nested background *agent*** (sub-sub-agent) instead
+- **C2. Same question for a nested background _agent_** (sub-sub-agent) instead
   of a shell task.
 - **C3. What happens to the orphaned work?** Killed at parent turn-end, or does
   it run to completion with the result going nowhere?
@@ -69,7 +69,7 @@ of that empirically.
 
 Probe method: instruct a probe agent to perform the exact stall shape
 deliberately, with every step appending a timestamped line to a `state.log`.
-Compliance with the weird instruction is itself easy; the *harness's* response
+Compliance with the weird instruction is itself easy; the _harness's_ response
 is the measurement.
 
 ## Tier A/B — behavior reproduction (stochastic; ~5–10 trials per cell)
@@ -79,7 +79,7 @@ dependencies:
 
 - a dummy repo + a local bare repo as the "remote" (push works, no forge);
 - `fake-pr` and `fake-enqueue` scripts appending to a log — so the full chain
-  *write → review-pass → commit → push → PR → enqueue → report* exists and every
+  _write → review-pass → commit → push → PR → enqueue → report_ exists and every
   step leaves a checkable, timestamped trace;
 - a fake gate queue with real ticket + slot mechanics, so "slot busy" signals
   occur naturally for Family B trials.
@@ -104,7 +104,7 @@ Candidate countermeasures, tested per family:
    print the contract at the moment it matters ("ticket queued — do NOT wait on
    the gate; hand back now" / "another runner holds the slot — this is normal;
    tickets remain claimable"). Hypothesis: beats brief phrasing, because tool
-   output is read *at* the decision rather than thousands of tokens before it.
+   output is read _at_ the decision rather than thousands of tokens before it.
 3. **Mechanical prevention** — whatever Tier C proves necessary (e.g. if nested
    turn-end is terminal, backgrounded waits inside implementers are banned
    structurally, not rhetorically).
