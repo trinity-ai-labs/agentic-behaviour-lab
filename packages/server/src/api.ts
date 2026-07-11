@@ -5,7 +5,7 @@
  * the trial records on disk because it IS those schemas.
  */
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "@effect/platform"
-import { CellSummary, RunConfig, RunRecord, ScenarioDefinition, TrialRecord } from "@abl/engine"
+import { CellSummary, RunConfig, RunRecord, ScenarioDefinition, TrialRecord } from "@abl/engine/schema"
 import { Schema } from "effect"
 
 // ---------------------------------------------------------------------------

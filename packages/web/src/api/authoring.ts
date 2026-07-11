@@ -9,7 +9,7 @@
  * action.
  */
 import { FetchHttpClient, HttpApiClient } from "@effect/platform"
-import type { ScenarioDefinition } from "@abl/engine"
+import type { ScenarioDefinition } from "@abl/engine/schema"
 import { Effect, Either } from "effect"
 import {
   AblApi,
@@ -20,7 +20,7 @@ import {
   type AuthorRequest,
   type AuthorResponse,
   type SaveScenarioRequest,
-} from "@abl/server"
+} from "@abl/server/api"
 
 const makeClient = HttpApiClient.make(AblApi).pipe(Effect.provide(FetchHttpClient.layer))
 
