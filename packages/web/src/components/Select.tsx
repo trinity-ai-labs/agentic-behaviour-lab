@@ -239,7 +239,7 @@ export function Select<T extends string>(props: SelectProps<T>) {
                     if (!option.disabled) setActiveIndex(index())
                   }}
                 >
-                  <span>{option.label}</span>
+                  <span class={styles.optionLabel}>{option.label}</span>
                   <Show when={option.value === props.value}>
                     <span class={styles.check} aria-hidden="true">
                       ✓

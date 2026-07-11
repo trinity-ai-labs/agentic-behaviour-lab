@@ -26,8 +26,9 @@ describe("formatFailRate", () => {
     expect(formatFailRate(null, 0, 0)).toBe("— (0 graded)")
   })
 
-  it("renders fail/(pass+fail) once graded trials exist", () => {
-    expect(formatFailRate(0.25, 6, 2)).toBe("25% (2/8)")
+  it("labels the rate as fail so it never reads as a pass rate", () => {
+    expect(formatFailRate(0.25, 6, 2)).toBe("25% fail · 2/8")
+    expect(formatFailRate(0, 4, 0)).toBe("0% fail · 0/4")
   })
 })
 
