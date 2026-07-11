@@ -121,3 +121,17 @@ does not detect the stream-level degradation that kills agents. Validity
 instrumentation must be built on observed per-trial signals (typed failure
 dispositions, latency, retries), with status feeds as annotation only. (#14
 tracks the implementation.)
+
+**In-fleet Family A instance, observed live during the build:** the final
+slice's implementer ended its turn with "the altitude review is still
+running; its completion notification will resume me" — the exact
+stall-on-wait shape, past an explicit brief ban, betting on the wake-up that
+F3/F4 say only arrives if the child completes cleanly. The child had gone
+dark; resume-on-silence recovered it in one message ("had no active task"
+confirmed the parent was fully stopped). Same epic also demonstrated a new
+routing fact: a running parent's grandchildren (review sub-agents) can have
+their results delivered to the TOP-LEVEL session instead of the parent, and
+shared MCP servers write artifacts to the SESSION cwd — sub-agent tool
+side-effects can escape the worktree sandbox entirely. Day tally: 8+
+watchdog kills + 2 behavioural stalls, 100% recovered by resume, zero work
+lost.
