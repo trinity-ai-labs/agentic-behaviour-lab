@@ -8,12 +8,19 @@
  * evidence worth recording, not a reason to lose the trial. Only a failure
  * to *persist* the resulting record (disk, index) is a real `Runner`
  * failure, since that means the store itself can no longer be trusted.
+ *
+ * Three layers of defense against provider degradation contaminating
+ * behaviour rates:
+ * 1. Disposition gate — only 'completed' subjects reach the grader.
+ * 2. Ambient provider-health capture — best-effort statuspage polls.
+ * 3. Degraded-run flagging — >20% error share marks the RunRecord.
  */
 import { Command, CommandExecutor } from '@effect/platform';
 import { Context, Data, Effect, Layer, Schema, Stream } from 'effect';
 import { randomUUID } from 'node:crypto';
 import * as NodeOs from 'node:os';
 import { AdapterRegistry } from './adapter.js';
+import type { SubjectDisposition } from './adapter.js';
 import { TrialIndex, type IndexError } from './index-db.js';
 import {
   renderBrief,
@@ -21,8 +28,81 @@ import {
   type LoadedScenario,
   type ScenarioLoadError,
 } from './scenarios.js';
-import { ExecutionShape, RunConfig, RunRecord, TrialRecord, Verdict } from './schema.js';
+import {
+  ExecutionShape,
+  ProviderStatusSnapshot,
+  RunConfig,
+  RunRecord,
+  TrialRecord,
+  Verdict,
+} from './schema.js';
 import { ArtifactStore, type StoreError } from './store.js';
+
+// ---------------------------------------------------------------------------
+// Provider status endpoints (statuspage JSON)
+// ---------------------------------------------------------------------------
+
+interface StatusEndpoint {
+  readonly provider: string;
+  readonly url: string;
+}
+
+const STATUS_ENDPOINTS: readonly StatusEndpoint[] = [
+  { provider: 'anthropic', url: 'https://status.anthropic.com/api/v2/summary.json' },
+  { provider: 'openai', url: 'https://status.openai.com/api/v2/summary.json' },
+];
+
+/** Best-effort fetch of a provider's statuspage summary. Short timeout, never blocks. */
+const fetchProviderStatus = (
+  endpoint: StatusEndpoint,
+): Effect.Effect<typeof ProviderStatusSnapshot.Type | undefined> =>
+  Effect.tryPromise({
+    try: (signal: AbortSignal) =>
+      fetch(endpoint.url, { signal }).then(async (response) => {
+        const body: unknown = await response.json();
+        // statuspage v2 summary.json has a "status" block with "description"
+        const status =
+          body != null && typeof body === 'object' && 'status' in body
+            ? String((body as Record<string, unknown>).status)
+            : 'unknown';
+        return {
+          provider: endpoint.provider,
+          status,
+          fetchedAt: new Date().toISOString(),
+          raw: JSON.stringify(body).slice(0, 1_000),
+        };
+      }),
+    catch: () => undefined,
+  }).pipe(
+    Effect.timeout('3 seconds'),
+    Effect.catchAll(() => Effect.succeed(undefined)),
+  );
+
+/**
+ * Maps a harness id to its likely provider for status lookups.
+ * Best-effort; unknown harnesses map to undefined and are skipped.
+ */
+const harnessProvider = (harness: string): string | undefined => {
+  if (harness === 'claude-cli' || harness.startsWith('claude-code')) return 'anthropic';
+  if (harness === 'codex-cli' || harness.startsWith('codex')) return 'openai';
+  return undefined;
+};
+
+/** Fetch provider status for every unique provider among the requested harnesses. */
+const captureProviderStatus = (
+  harnesses: ReadonlyArray<string>,
+): Effect.Effect<ReadonlyArray<typeof ProviderStatusSnapshot.Type>> => {
+  const providers = new Set(harnesses.map((h) => harnessProvider(h)).filter(Boolean));
+  if (providers.size === 0) return Effect.succeed([]);
+  return Effect.all(
+    STATUS_ENDPOINTS.filter((ep) => providers.has(ep.provider)).map(fetchProviderStatus),
+    { concurrency: 'unbounded' },
+  ).pipe(
+    Effect.map((snapshots) =>
+      snapshots.filter((s): s is typeof ProviderStatusSnapshot.Type => s !== undefined),
+    ),
+  );
+};
 
 export class RunConfigError extends Data.TaggedError('RunConfigError')<{
   readonly reason: string;
@@ -119,10 +199,18 @@ export const RunnerLive: Layer.Layer<
         return stdout;
       });
 
-    const errorVerdict = (cause: unknown): Verdict => ({
+    const errorVerdict = (
+      cause: unknown,
+      disposition?: SubjectDisposition,
+      dispositionCause?: string,
+    ): Verdict => ({
       outcome: 'error',
       gradedBy: 'mechanical',
-      detail: { cause: cause instanceof Error ? cause.message : String(cause) },
+      detail: {
+        cause: cause instanceof Error ? cause.message : String(cause),
+        ...(disposition !== undefined ? { disposition } : {}),
+        ...(dispositionCause !== undefined ? { dispositionCause } : {}),
+      },
       note: 'trial infrastructure failed before a grader verdict was produced',
     });
 
@@ -155,6 +243,18 @@ export const RunnerLive: Layer.Layer<
 
           const brief = renderBrief(params.scenario.briefTemplate, params.condition.params);
           const subject = yield* adapter.run({ modelId: params.modelId, brief, workspaceDir });
+
+          // -- Grading gate: only 'completed' dispositions reach the grader. --
+          if (subject.disposition !== 'completed') {
+            return {
+              verdict: errorVerdict(
+                `subject disposition: ${subject.disposition}`,
+                subject.disposition,
+                `subject finished with disposition "${subject.disposition}"`,
+              ),
+              finalMessage: subject.finalMessage,
+            };
+          }
 
           const graderOut = yield* runScript(
             params.scenario.graderPath,
@@ -223,7 +323,16 @@ export const RunnerLive: Layer.Layer<
         }
 
         const runId = randomUUID();
-        const running: RunRecord = { runId, config, startedAt: nowIso(), status: 'running' };
+
+        // -- Provider status: captured at run start (pre-trial) and end (post-trial). --
+        const startStatus = yield* captureProviderStatus(config.harnesses);
+        const running: RunRecord = {
+          runId,
+          config,
+          startedAt: nowIso(),
+          status: 'running',
+          providerStatus: startStatus.length > 0 ? startStatus : undefined,
+        };
         yield* store.writeRun(running);
 
         const cells = config.conditions.flatMap((label) => {
@@ -236,14 +345,32 @@ export const RunnerLive: Layer.Layer<
           );
         });
 
-        yield* Effect.forEach(
+        const trials = yield* Effect.forEach(
           cells,
           ({ condition, modelId, harness }) =>
             runTrial({ runId, scenario, condition, modelId, harness, shape: config.shape }),
-          { concurrency: config.maxConcurrent, discard: true },
+          { concurrency: config.maxConcurrent },
         );
 
-        const completed: RunRecord = { ...running, status: 'completed', endedAt: nowIso() };
+        // -- Validity: if error share > 20%, mark the run as degraded-conditions. --
+        const errorCount = trials.filter((t) => t.verdict.outcome === 'error').length;
+        const totalTrials = trials.length;
+        const validity: 'valid' | 'degraded-conditions' =
+          totalTrials > 0 && errorCount / totalTrials > 0.2 ? 'degraded-conditions' : 'valid';
+
+        const endStatus = yield* captureProviderStatus(config.harnesses);
+        const combinedStatus =
+          startStatus.length > 0 || endStatus.length > 0
+            ? [...startStatus, ...endStatus]
+            : undefined;
+
+        const completed: RunRecord = {
+          ...running,
+          status: 'completed',
+          endedAt: nowIso(),
+          providerStatus: combinedStatus,
+          validity,
+        };
         yield* store.writeRun(completed);
         return completed;
       });
