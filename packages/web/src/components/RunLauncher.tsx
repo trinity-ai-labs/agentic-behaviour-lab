@@ -9,6 +9,7 @@ import { useNavigate } from "@solidjs/router"
 import { createMemo, createSignal, For, Show } from "solid-js"
 import type { ExecutionShape, RunConfig, ScenarioDefinition } from "../api/client"
 import { useCreateRun } from "../query/hooks/runs"
+import { Select } from "./Select"
 import styles from "./RunLauncher.module.css"
 
 const WELL_KNOWN_HARNESSES = ["claude-cli", "codex-cli"] as const
@@ -80,20 +81,16 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
     <form class={styles.form} onSubmit={onSubmit}>
       <h3 class={styles.heading}>Run trials</h3>
 
-      <label class={styles.field}>
-        <span class={styles.fieldLabel}>Scenario</span>
-        <select
-          class={styles.select}
-          value={scenarioId()}
-          onChange={(e) => {
-            setScenarioId(e.currentTarget.value)
-            setConditions([])
-            setShape("")
-          }}
-        >
-          <For each={props.scenarios}>{(s) => <option value={s.scenarioId}>{s.title}</option>}</For>
-        </select>
-      </label>
+      <Select
+        label="Scenario"
+        value={scenarioId()}
+        onChange={(value) => {
+          setScenarioId(value)
+          setConditions([])
+          setShape("")
+        }}
+        options={props.scenarios.map((s) => ({ value: s.scenarioId, label: s.title }))}
+      />
 
       <Show when={scenario()}>
         {(s) => (
@@ -116,15 +113,13 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
               </div>
             </fieldset>
 
-            <label class={styles.field}>
-              <span class={styles.fieldLabel}>Shape</span>
-              <select class={styles.select} value={shape()} onChange={(e) => setShape(e.currentTarget.value as ExecutionShape)}>
-                <option value="" disabled>
-                  Choose a shape…
-                </option>
-                <For each={s().declaredShapes}>{(shapeOption) => <option value={shapeOption}>{shapeOption}</option>}</For>
-              </select>
-            </label>
+            <Select<ExecutionShape | "">
+              label="Shape"
+              placeholder="Choose a shape…"
+              value={shape()}
+              onChange={setShape}
+              options={s().declaredShapes.map((shapeOption) => ({ value: shapeOption, label: shapeOption }))}
+            />
           </>
         )}
       </Show>
