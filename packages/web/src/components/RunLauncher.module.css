@@ -30,7 +30,6 @@
   padding: 0;
 }
 
-.select,
 .input {
   background: var(--input);
   color: var(--foreground);
