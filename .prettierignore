@@ -1,0 +1,6 @@
+node_modules/
+dist/
+local/
+pnpm-lock.yaml
+*.min.*
+packages/web/public/

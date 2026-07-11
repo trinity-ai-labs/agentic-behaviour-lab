@@ -3,3 +3,8 @@ node_modules/
 *.tmp
 local/
 dist/
+
+# scratch / local debugging artifacts (browser automation dumps, screenshots)
+.playwright-mcp/
+/*.png
+/nav-snap.md
