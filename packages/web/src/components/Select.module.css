@@ -1,0 +1,118 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.field {
+  position: relative;
+}
+
+/* Trigger keeps the exact look the old per-module .select rules had:
+   --input bg, --foreground text, 1px --border, --radius-md, --space-2/3, --text-sm. */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  background: var(--input);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  color: var(--muted);
+}
+
+.arrow {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* Floating popup directly under the trigger: elevation via border only
+   (no raw shadow colour), with an internal scroll for long lists. */
+.listbox {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.option.active {
+  background: var(--accent);
+}
+
+.option.selected {
+  font-weight: 600;
+}
+
+.check {
+  color: var(--primary);
+}
+
+/* Selected + active reads as the current, focused row: filled with the brand
+   colour and its on-colour text/marker. */
+.option.selected.active {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.option.selected.active .check {
+  color: var(--on-primary);
+}
+
+.option.optionDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
