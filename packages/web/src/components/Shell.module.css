@@ -45,14 +45,17 @@
   color: var(--muted);
 }
 
+/* --input reads as a filled control in BOTH schemes (darker than --surface on
+   light, lighter on dark), unlike --elevated which is pure white on the light
+   schemes and so vanished against the near-white header. */
 .navLink:hover {
   color: var(--foreground);
-  background: var(--elevated);
+  background: var(--input);
 }
 
 .navLinkActive {
-  color: var(--foreground);
-  background: var(--elevated);
+  color: var(--primary);
+  background: var(--input);
   font-weight: 600;
 }
 

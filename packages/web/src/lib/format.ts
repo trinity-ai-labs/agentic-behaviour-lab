@@ -18,9 +18,16 @@ export const formatRate = (numerator: number, denominator: number): string => {
 export const failRateOf = (pass: number, fail: number): number | null =>
   pass + fail > 0 ? fail / (pass + fail) : null
 
-/** `CellSummary.failRate` is null until at least one pass/fail trial exists. */
-export const formatFailRate = (failRate: number | null, pass: number, fail: number): string =>
-  failRate === null ? `— (${pass + fail} graded)` : formatRate(fail, pass + fail)
+/**
+ * `CellSummary.failRate` is null until at least one pass/fail trial exists.
+ * The "fail" word is carried in the string itself so the number never reads as
+ * a pass rate — a passing cell shows all-green pips beside "0% fail", not a
+ * bare "0%" that looks like "0% passed".
+ */
+export const formatFailRate = (failRate: number | null, pass: number, fail: number): string => {
+  const graded = pass + fail
+  return failRate === null ? `— (${graded} graded)` : `${Math.round(failRate * 100)}% fail · ${fail}/${graded}`
+}
 
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",

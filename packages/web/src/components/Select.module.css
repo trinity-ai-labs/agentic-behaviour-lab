@@ -65,11 +65,18 @@
   position: absolute;
   top: calc(100% + var(--space-1));
   left: 0;
-  right: 0;
   z-index: 20;
   margin: 0;
   padding: var(--space-1);
   list-style: none;
+  /* At least the trigger's width, but free to grow to the widest option so a
+     narrow trigger (e.g. the theme picker) never clips its content: overflow-y
+     forces overflow-x to auto, so a listbox pinned to the trigger width would
+     shave the check marker off "Ledger ✓". Capped so a long scenario title
+     can't run off-screen — the label ellipses instead. */
+  min-width: 100%;
+  width: max-content;
+  max-width: min(24rem, calc(100vw - var(--space-5)));
   max-height: 16rem;
   overflow-y: auto;
   background: var(--elevated);
@@ -89,8 +96,18 @@
   cursor: pointer;
 }
 
+/* Hovered/active row: on the light schemes --accent is dark, so the row text
+   must flip to its on-colour or it stays near-invisible dark-on-dark. */
 .option.active {
   background: var(--accent);
+  color: var(--on-primary);
+}
+
+.optionLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .option.selected {
@@ -98,6 +115,7 @@
 }
 
 .check {
+  flex-shrink: 0;
   color: var(--primary);
 }
 
