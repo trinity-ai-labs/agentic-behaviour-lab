@@ -71,6 +71,41 @@ correct record of what happened. Both CLIs must be installed and
 authenticated locally; tests never invoke either (a stub adapter covers every
 test path).
 
+## Running the dashboard
+
+The lab ships a local web dashboard — the Benchmarks comparison grid, a run
+launcher, and scenario authoring — served by `abl-serve`: the typed HTTP API
+over `@abl/engine` plus the built dashboard, bound to `127.0.0.1` only (solo,
+local-first; never exposed to another machine).
+
+```
+pnpm install && pnpm build          # build every workspace package
+node packages/server/dist/main.js   # abl-serve → http://127.0.0.1:4477
+```
+
+Open <http://127.0.0.1:4477> for the API and dashboard in one process. Trials
+launched from the UI run in this process against your locally-authenticated
+CLIs.
+
+- **Store** — flat `trial.json` files plus a rebuildable index live under
+  `$ABL_HOME` (default `~/.abl`); set `ABL_HOME=/path/to/store` to point at a
+  scratch or alternate lab.
+- **Port** — `ABL_PORT` (default `4477`).
+- **Seed demo data** — populate a store with a synthetic StubAdapter run (no
+  real agent, no API spend) to explore the dashboard before running anything
+  real: `pnpm --filter @abl/web seed-dev` (writes to `$ABL_HOME`).
+
+### Dashboard development
+
+For UI work with hot reload, run Vite alongside the server:
+
+```
+node packages/server/dist/main.js   # API on :4477
+pnpm --filter @abl/web dev          # dashboard on :5173, /api proxied to :4477
+```
+
+Vite proxies `/api` to `127.0.0.1:4477` (override with `ABL_API_PROXY_TARGET`).
+
 ## MCP server
 
 `@abl/mcp` exposes the lab to agents over stdio — list scenarios, launch
