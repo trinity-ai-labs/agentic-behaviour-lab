@@ -1,3 +1,4 @@
+import { Select } from "./Select"
 import { useTheme, type SchemeId, type ThemeId } from "../lib/theme"
 import styles from "./ThemeToggle.module.css"
 
@@ -5,17 +6,15 @@ export const ThemeToggle = () => {
   const { theme, scheme, setTheme, setScheme } = useTheme()
   return (
     <div class={styles.controls}>
-      <label class={styles.control}>
-        <span class={styles.srOnly}>Theme</span>
-        <select
-          class={styles.select}
-          value={theme()}
-          onChange={(e) => setTheme(e.currentTarget.value as ThemeId)}
-        >
-          <option value="rime">Rime</option>
-          <option value="ledger">Ledger</option>
-        </select>
-      </label>
+      <Select<ThemeId>
+        aria-label="Theme"
+        value={theme()}
+        onChange={setTheme}
+        options={[
+          { value: "rime", label: "Rime" },
+          { value: "ledger", label: "Ledger" },
+        ]}
+      />
       <button
         type="button"
         class={styles.schemeButton}
