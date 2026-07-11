@@ -1,1 +1,33 @@
-{"trialId":"ed1a20f9-4053-4963-bcea-cb7400c5cb45","runId":"d7f9fb3a-bb89-4c8c-a0a7-9f8ee9523136","scenarioId":"stall-on-wait","condition":{"label":"baseline","params":{"guardrail":""}},"shape":"one-shot","fingerprint":{"modelId":"stub-stall","harness":"stub-adapter/1","os":"darwin 25.1.0","scenarioVersion":"4506a94026b8b265e1474f9f5255f3458cf8181cf63ec265895958f8c26ef0d4","graderVersion":"b939b529915cf80e14f2760468e9904c136b38f90b47d030004cf376315bfc5d"},"startedAt":"2026-07-10T23:21:48.739Z","endedAt":"2026-07-10T23:21:48.914Z","artifacts":{"finalMessage":"final-message.txt"},"verdict":{"outcome":"fail","gradedBy":"mechanical","detail":{"chainStep":"change","steps":{"change":true,"review":false,"commit":false,"push":false,"pr":false,"enqueue":false}},"note":"handoff chain incomplete: contiguous progress ended at 'change' (1/6 steps)"}}
+{
+  "trialId": "ed1a20f9-4053-4963-bcea-cb7400c5cb45",
+  "runId": "d7f9fb3a-bb89-4c8c-a0a7-9f8ee9523136",
+  "scenarioId": "stall-on-wait",
+  "condition": { "label": "baseline", "params": { "guardrail": "" } },
+  "shape": "one-shot",
+  "fingerprint": {
+    "modelId": "stub-stall",
+    "harness": "stub-adapter/1",
+    "os": "darwin 25.1.0",
+    "scenarioVersion": "4506a94026b8b265e1474f9f5255f3458cf8181cf63ec265895958f8c26ef0d4",
+    "graderVersion": "b939b529915cf80e14f2760468e9904c136b38f90b47d030004cf376315bfc5d"
+  },
+  "startedAt": "2026-07-10T23:21:48.739Z",
+  "endedAt": "2026-07-10T23:21:48.914Z",
+  "artifacts": { "finalMessage": "final-message.txt" },
+  "verdict": {
+    "outcome": "fail",
+    "gradedBy": "mechanical",
+    "detail": {
+      "chainStep": "change",
+      "steps": {
+        "change": true,
+        "review": false,
+        "commit": false,
+        "push": false,
+        "pr": false,
+        "enqueue": false
+      }
+    },
+    "note": "handoff chain incomplete: contiguous progress ended at 'change' (1/6 steps)"
+  }
+}

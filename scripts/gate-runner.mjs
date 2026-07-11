@@ -141,7 +141,9 @@ function runGateInWorktree(ticket) {
 function gh(args, cwd) {
   const result = spawnSync('gh', args, { cwd, encoding: 'utf8' });
   if (result.status !== 0) {
-    console.error(`[gate-runner] gh ${args.slice(0, 2).join(' ')} failed: ${(result.stderr ?? '').trim()}`);
+    console.error(
+      `[gate-runner] gh ${args.slice(0, 2).join(' ')} failed: ${(result.stderr ?? '').trim()}`,
+    );
   }
   return result;
 }
@@ -154,7 +156,10 @@ function resolveTicket(ticket, result) {
   }
   if (result.code === 0) {
     gh(['pr', 'ready', pr], ticket.worktreePath);
-    gh(['pr', 'comment', pr, '--body', `gate ✓ passed (runner pid ${process.pid})`], ticket.worktreePath);
+    gh(
+      ['pr', 'comment', pr, '--body', `gate ✓ passed (runner pid ${process.pid})`],
+      ticket.worktreePath,
+    );
   } else {
     const body = `gate ✗ failed (exit ${result.code}) — left as a draft.\n\n\`\`\`\n${result.tail}\n\`\`\``;
     gh(['pr', 'comment', pr, '--body', body], ticket.worktreePath);
@@ -204,7 +209,7 @@ function parseArgs(argv) {
     if (argv[i].startsWith('--')) {
       const key = argv[i].slice(2);
       const next = argv[i + 1];
-      flags[key] = next && !next.startsWith('--') ? (i += 1, next) : true;
+      flags[key] = next && !next.startsWith('--') ? ((i += 1), next) : true;
     }
   }
   return flags;

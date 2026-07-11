@@ -1,7 +1,7 @@
 # Design — identity and theming architecture
 
-Binding for `@abl/web` (and any future surface). Two halves: the *direction*
-(what the product looks and feels like) and the *token architecture* (how
+Binding for `@abl/web` (and any future surface). Two halves: the _direction_
+(what the product looks and feels like) and the _token architecture_ (how
 themes are built so that multiple themes × dark/light stays clean forever).
 
 ## Direction: the instrument, not the admin panel
@@ -21,7 +21,7 @@ novelty face; the identity risk is spent elsewhere (below).
 percentages — a benchmark cell renders its N as **discrete trial pips**, one
 per trial, colored by verdict. Ten trials = ten visible pips. The
 statistical-honesty rule ("a claim without its N is folklore") becomes the
-visual identity: you *see* the evidence count, small N looks appropriately
+visual identity: you _see_ the evidence count, small N looks appropriately
 thin, and a live run is pips materializing one by one. This is the one
 memorable element; everything around it stays quiet.
 
@@ -79,12 +79,12 @@ role set from researched design-token extraction across real codebases (portable
 shadcn/Material/Tailwind conventions; its backbone is the surface +
 on-surface contrast pairing):
 
-- *Surfaces:* `background`, `surface`, `elevated`
-- *Content:* `foreground`, `muted`
-- *Brand:* `primary`, `on-primary`, `accent`
-- *Feedback:* `danger`, `warning`, `success`, `info`
-- *Chrome:* `border`, `input`, `ring`
-- *Lab extensions (open vocabulary):* `verdict-pass`, `verdict-fail`,
+- _Surfaces:_ `background`, `surface`, `elevated`
+- _Content:_ `foreground`, `muted`
+- _Brand:_ `primary`, `on-primary`, `accent`
+- _Feedback:_ `danger`, `warning`, `success`, `info`
+- _Chrome:_ `border`, `input`, `ring`
+- _Lab extensions (open vocabulary):_ `verdict-pass`, `verdict-fail`,
   `verdict-inconclusive`, `verdict-error`, `chart-1…6`
 
 Each theme file contains exactly two blocks —
@@ -106,10 +106,10 @@ identical across modes stay identical.
 
 **Enforcement — checks, not discipline** (both wired into `pnpm check`):
 
-1. *No raw color, no primitives in components:* a script fails the check if
+1. _No raw color, no primitives in components:_ a script fails the check if
    any file in `packages/web/src` outside `tokens/` contains a hex/oklch
    literal or a Layer-1 token name.
-2. *Matrix completeness:* a script parses the semantic contract (the token
+2. _Matrix completeness:_ a script parses the semantic contract (the token
    list) and every theme file, and fails if any theme × scheme block is
    missing any token. Adding a half-defined theme is a build error, not a
    surprise in production.

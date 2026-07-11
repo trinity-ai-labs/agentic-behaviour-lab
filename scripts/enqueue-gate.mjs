@@ -37,7 +37,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const DEFAULT_QUEUE_ROOT = process.env.GATE_QUEUE_DIR || path.join(os.tmpdir(), 'abl-gate-queue');
+export const DEFAULT_QUEUE_ROOT =
+  process.env.GATE_QUEUE_DIR || path.join(os.tmpdir(), 'abl-gate-queue');
 
 /** Resolve the three queue subdirectories under a root. */
 export function queueDirs(root = DEFAULT_QUEUE_ROOT) {
@@ -75,8 +76,19 @@ export function listQueue(root = DEFAULT_QUEUE_ROOT) {
  * renames it into queue/ so no partial ticket is ever observable there.
  * Returns the queued ticket's name and absolute path.
  */
-export function enqueue({ root = DEFAULT_QUEUE_ROOT, branch, worktreePath, prNumber, prUrl, mode = 'default', pid = process.pid, epoch = Date.now() } = {}) {
-  const missing = ['branch', 'worktreePath', 'prNumber', 'prUrl'].filter((k) => !{ branch, worktreePath, prNumber, prUrl }[k]);
+export function enqueue({
+  root = DEFAULT_QUEUE_ROOT,
+  branch,
+  worktreePath,
+  prNumber,
+  prUrl,
+  mode = 'default',
+  pid = process.pid,
+  epoch = Date.now(),
+} = {}) {
+  const missing = ['branch', 'worktreePath', 'prNumber', 'prUrl'].filter(
+    (k) => !{ branch, worktreePath, prNumber, prUrl }[k],
+  );
   if (missing.length > 0) {
     throw new Error(`enqueue: missing required field(s): ${missing.join(', ')}`);
   }
@@ -96,7 +108,10 @@ export function enqueue({ root = DEFAULT_QUEUE_ROOT, branch, worktreePath, prNum
 
   // Temp name is unique per writer so two concurrent enqueues never collide on
   // the staging file; the rename into queue/ is the atomic publish.
-  const tmp = path.join(dirs.root, `.tmp-${pid}-${epoch}-${Math.random().toString(36).slice(2)}.json`);
+  const tmp = path.join(
+    dirs.root,
+    `.tmp-${pid}-${epoch}-${Math.random().toString(36).slice(2)}.json`,
+  );
   writeFileSync(tmp, body);
   const dest = path.join(dirs.queue, name);
   renameSync(tmp, dest);

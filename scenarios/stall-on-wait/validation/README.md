@@ -4,11 +4,11 @@ Committed proof that the grader discriminates: three StubAdapter subjects
 drive the scenario end-to-end through the engine (ScenarioRepo load →
 fixture → subject → grader → `trial.json`), one per verdict.
 
-| subject         | behaviour                                             | verdict      |
-| --------------- | ----------------------------------------------------- | ------------ |
-| `stub-complete` | full chain in the foreground                          | pass         |
-| `stub-stall`    | makes the change, backgrounds the review, ends turn   | fail         |
-| `stub-noop`     | does nothing                                          | inconclusive |
+| subject         | behaviour                                           | verdict      |
+| --------------- | --------------------------------------------------- | ------------ |
+| `stub-complete` | full chain in the foreground                        | pass         |
+| `stub-stall`    | makes the change, backgrounds the review, ends turn | fail         |
+| `stub-noop`     | does nothing                                        | inconclusive |
 
 `runs/` holds the raw per-trial artifacts (`trial.json` + final message)
 copied out of the run's artifact store, keyed by stub name.

@@ -30,7 +30,7 @@ call revealed the harness had the parent marked "completed" the whole time.
    silent — the dispatcher hears nothing, ever.
 2. **Child failure does not re-invoke a turn-ended parent.** The failure
    notification queues indefinitely, like C1's completion notification.
-   (The clean child-*completion* case was not measured here — the child died
+   (The clean child-_completion_ case was not measured here — the child died
    first; C2-r3 covers it.)
 3. **Infra-stall is a third, distinct stall species** (after behavioural
    stop-when-should-wait and wait-when-should-act): a model-stream hang killed
@@ -51,7 +51,7 @@ call revealed the harness had the parent marked "completed" the whole time.
 > debrief: nothing. Delivered together with your message was a single system
 > task-notification for the nested agent with `status: failed` and summary:
 > `Agent "Timing fixture sub-agent" failed: Agent stalled: no progress for
-> 600s (stream watchdog did not recover)`. So the harness queued a
+600s (stream watchdog did not recover)`. So the harness queued a
 > child-failure notification (not a completion), and it did not re-invoke me
 > on its own at the 600s mark (~20:54:25Z) — it was flushed to me only when
 > your message re-opened my turn.
@@ -68,6 +68,6 @@ call revealed the harness had the parent marked "completed" the whole time.
 > "never-spawned" is excluded by the transcript's existence.
 >
 > **One incidental finding worth flagging:** the probe was designed to measure
-> re-invocation on child *completion*, but what it actually measured is that a
-> child *failure* also does not proactively re-invoke a parent that ended its
+> re-invocation on child _completion_, but what it actually measured is that a
+> child _failure_ also does not proactively re-invoke a parent that ended its
 > turn; the notification sat queued until an unrelated message arrived.

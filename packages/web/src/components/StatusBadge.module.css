@@ -17,17 +17,17 @@
   letter-spacing: 0.02em;
 }
 
-.badge[data-status="running"] {
+.badge[data-status='running'] {
   color: var(--info);
   background: color-mix(in oklch, var(--info) 16%, transparent);
 }
 
-.badge[data-status="completed"] {
+.badge[data-status='completed'] {
   color: var(--success);
   background: color-mix(in oklch, var(--success) 16%, transparent);
 }
 
-.badge[data-status="aborted"] {
+.badge[data-status='aborted'] {
   color: var(--danger);
   background: color-mix(in oklch, var(--danger) 16%, transparent);
 }

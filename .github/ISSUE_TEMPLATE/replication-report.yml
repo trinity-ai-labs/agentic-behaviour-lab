@@ -1,19 +1,19 @@
 name: Replication report
 description: Report a replication (confirming or contradicting) of an existing experiment
-labels: ["replication"]
+labels: ['replication']
 body:
   - type: input
     id: experiment
     attributes:
       label: Experiment slug
-      placeholder: "001-wait-shaped-failures"
+      placeholder: '001-wait-shaped-failures'
     validations:
       required: true
   - type: input
     id: environment
     attributes:
       label: Model + harness versions
-      placeholder: "claude-sonnet-5, Claude Code v2.x, macOS"
+      placeholder: 'claude-sonnet-5, Claude Code v2.x, macOS'
     validations:
       required: true
   - type: dropdown

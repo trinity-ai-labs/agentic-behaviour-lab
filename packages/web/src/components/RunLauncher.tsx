@@ -5,48 +5,50 @@
  * both CLIs side by side) — well-known ids get checkboxes; a free-text
  * field covers a locally registered stub/harness id for dev/testing.
  */
-import { useNavigate } from "@solidjs/router"
-import { createMemo, createSignal, For, Show } from "solid-js"
-import type { ExecutionShape, RunConfig, ScenarioDefinition } from "../api/client"
-import { useCreateRun } from "../query/hooks/runs"
-import { Select } from "./Select"
-import styles from "./RunLauncher.module.css"
+import { useNavigate } from '@solidjs/router';
+import { createMemo, createSignal, For, Show } from 'solid-js';
+import type { ExecutionShape, RunConfig, ScenarioDefinition } from '../api/client';
+import { useCreateRun } from '../query/hooks/runs';
+import { Select } from './Select';
+import styles from './RunLauncher.module.css';
 
-const WELL_KNOWN_HARNESSES = ["claude-cli", "codex-cli"] as const
+const WELL_KNOWN_HARNESSES = ['claude-cli', 'codex-cli'] as const;
 
 export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition> }) => {
-  const navigate = useNavigate()
-  const createRun = useCreateRun()
+  const navigate = useNavigate();
+  const createRun = useCreateRun();
 
-  const [scenarioId, setScenarioId] = createSignal(props.scenarios[0]?.scenarioId ?? "")
-  const scenario = createMemo(() => props.scenarios.find((s) => s.scenarioId === scenarioId()))
+  const [scenarioId, setScenarioId] = createSignal(props.scenarios[0]?.scenarioId ?? '');
+  const scenario = createMemo(() => props.scenarios.find((s) => s.scenarioId === scenarioId()));
 
-  const [conditions, setConditions] = createSignal<ReadonlyArray<string>>([])
-  const [modelsText, setModelsText] = createSignal("")
-  const [harnesses, setHarnesses] = createSignal<ReadonlyArray<string>>(["claude-cli"])
-  const [extraHarness, setExtraHarness] = createSignal("")
-  const [shape, setShape] = createSignal<ExecutionShape | "">("")
-  const [trialsPerCell, setTrialsPerCell] = createSignal(5)
-  const [maxConcurrent, setMaxConcurrent] = createSignal(4)
+  const [conditions, setConditions] = createSignal<ReadonlyArray<string>>([]);
+  const [modelsText, setModelsText] = createSignal('');
+  const [harnesses, setHarnesses] = createSignal<ReadonlyArray<string>>(['claude-cli']);
+  const [extraHarness, setExtraHarness] = createSignal('');
+  const [shape, setShape] = createSignal<ExecutionShape | ''>('');
+  const [trialsPerCell, setTrialsPerCell] = createSignal(5);
+  const [maxConcurrent, setMaxConcurrent] = createSignal(4);
 
   const toggleCondition = (label: string) => {
-    setConditions((prev) => (prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label]))
-  }
+    setConditions((prev) =>
+      prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label],
+    );
+  };
   const toggleHarness = (id: string) => {
-    setHarnesses((prev) => (prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]))
-  }
+    setHarnesses((prev) => (prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]));
+  };
 
   const models = createMemo(() =>
     modelsText()
-      .split(",")
+      .split(',')
       .map((m) => m.trim())
       .filter((m) => m.length > 0),
-  )
+  );
 
   const effectiveHarnesses = createMemo(() => {
-    const extra = extraHarness().trim()
-    return extra.length > 0 ? [...harnesses(), extra] : harnesses()
-  })
+    const extra = extraHarness().trim();
+    return extra.length > 0 ? [...harnesses(), extra] : harnesses();
+  });
 
   const canSubmit = createMemo(
     () =>
@@ -54,15 +56,15 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
       conditions().length > 0 &&
       models().length > 0 &&
       effectiveHarnesses().length > 0 &&
-      shape() !== "" &&
+      shape() !== '' &&
       trialsPerCell() > 0,
-  )
+  );
 
   const onSubmit = (e: SubmitEvent) => {
-    e.preventDefault()
-    const s = scenario()
-    const selectedShape = shape()
-    if (s === undefined || selectedShape === "" || !canSubmit()) return
+    e.preventDefault();
+    const s = scenario();
+    const selectedShape = shape();
+    if (s === undefined || selectedShape === '' || !canSubmit()) return;
     const config: RunConfig = {
       scenarioId: s.scenarioId,
       conditions: conditions(),
@@ -71,11 +73,11 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
       shape: selectedShape,
       trialsPerCell: trialsPerCell(),
       maxConcurrent: maxConcurrent(),
-    }
+    };
     createRun.mutate(config, {
       onSuccess: (started) => navigate(`/runs/${started.runId}`),
-    })
-  }
+    });
+  };
 
   return (
     <form class={styles.form} onSubmit={onSubmit}>
@@ -85,9 +87,9 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
         label="Scenario"
         value={scenarioId()}
         onChange={(value) => {
-          setScenarioId(value)
-          setConditions([])
-          setShape("")
+          setScenarioId(value);
+          setConditions([]);
+          setShape('');
         }}
         options={props.scenarios.map((s) => ({ value: s.scenarioId, label: s.title }))}
       />
@@ -113,12 +115,15 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
               </div>
             </fieldset>
 
-            <Select<ExecutionShape | "">
+            <Select<ExecutionShape | ''>
               label="Shape"
               placeholder="Choose a shape…"
               value={shape()}
               onChange={setShape}
-              options={s().declaredShapes.map((shapeOption) => ({ value: shapeOption, label: shapeOption }))}
+              options={s().declaredShapes.map((shapeOption) => ({
+                value: shapeOption,
+                label: shapeOption,
+              }))}
             />
           </>
         )}
@@ -141,7 +146,11 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
           <For each={WELL_KNOWN_HARNESSES}>
             {(id) => (
               <label class={styles.checkLabel}>
-                <input type="checkbox" checked={harnesses().includes(id)} onChange={() => toggleHarness(id)} />
+                <input
+                  type="checkbox"
+                  checked={harnesses().includes(id)}
+                  onChange={() => toggleHarness(id)}
+                />
                 {id}
               </label>
             )}
@@ -180,12 +189,12 @@ export const RunLauncher = (props: { scenarios: ReadonlyArray<ScenarioDefinition
       </div>
 
       <button type="submit" class={styles.submit} disabled={!canSubmit() || createRun.isPending}>
-        {createRun.isPending ? "Starting…" : "Run trials"}
+        {createRun.isPending ? 'Starting…' : 'Run trials'}
       </button>
 
       <Show when={createRun.isError}>
-        <p class={styles.error}>{String(createRun.error?.message ?? "Failed to start run")}</p>
+        <p class={styles.error}>{String(createRun.error?.message ?? 'Failed to start run')}</p>
       </Show>
     </form>
-  )
-}
+  );
+};

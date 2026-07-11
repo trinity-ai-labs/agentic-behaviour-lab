@@ -4,7 +4,7 @@
  * them. Flat files are the source of truth; anything else (SQLite, UI state)
  * is a derived index rebuilt from records that satisfy this module.
  */
-import { Schema } from "effect"
+import { Schema } from 'effect';
 
 // ---------------------------------------------------------------------------
 // Environment fingerprint
@@ -25,8 +25,8 @@ export const EnvironmentFingerprint = Schema.Struct({
   scenarioVersion: Schema.String,
   /** Version of the grader used (its content hash or semver). */
   graderVersion: Schema.String,
-})
-export type EnvironmentFingerprint = typeof EnvironmentFingerprint.Type
+});
+export type EnvironmentFingerprint = typeof EnvironmentFingerprint.Type;
 
 // ---------------------------------------------------------------------------
 // Execution shapes — how a subject runs. Behaviour differs by shape, so the
@@ -34,12 +34,12 @@ export type EnvironmentFingerprint = typeof EnvironmentFingerprint.Type
 // ---------------------------------------------------------------------------
 
 export const ExecutionShape = Schema.Literal(
-  "one-shot",
-  "session",
-  "pipeline",
-  "orchestration-tree",
-)
-export type ExecutionShape = typeof ExecutionShape.Type
+  'one-shot',
+  'session',
+  'pipeline',
+  'orchestration-tree',
+);
+export type ExecutionShape = typeof ExecutionShape.Type;
 
 // ---------------------------------------------------------------------------
 // Verdicts
@@ -50,26 +50,26 @@ export type ExecutionShape = typeof ExecutionShape.Type
 
 export const VerdictOutcome = Schema.Literal(
   /** The behaviour under test did NOT occur (agent did the right thing). */
-  "pass",
+  'pass',
   /** The behaviour under test occurred (the failure mode manifested). */
-  "fail",
+  'fail',
   /** The grader could not determine an outcome from the artifacts. */
-  "inconclusive",
+  'inconclusive',
   /** The trial itself broke (fixture error, spawn failure, infra stall). */
-  "error",
-)
-export type VerdictOutcome = typeof VerdictOutcome.Type
+  'error',
+);
+export type VerdictOutcome = typeof VerdictOutcome.Type;
 
 export const Verdict = Schema.Struct({
   outcome: VerdictOutcome,
   /** Which grader tier produced this: mechanical checks first, always. */
-  gradedBy: Schema.Literal("mechanical", "transcript-check", "llm-judge"),
+  gradedBy: Schema.Literal('mechanical', 'transcript-check', 'llm-judge'),
   /** Machine-readable grader detail (chain step reached, markers found, …). */
   detail: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
   /** Free-text note for humans reading the run. */
   note: Schema.optional(Schema.String),
-})
-export type Verdict = typeof Verdict.Type
+});
+export type Verdict = typeof Verdict.Type;
 
 // ---------------------------------------------------------------------------
 // Trial record — one `trial.json`, the atomic unit of evidence.
@@ -103,8 +103,8 @@ export const TrialRecord = Schema.Struct({
    */
   artifacts: Schema.Record({ key: Schema.String, value: Schema.String }),
   verdict: Verdict,
-})
-export type TrialRecord = typeof TrialRecord.Type
+});
+export type TrialRecord = typeof TrialRecord.Type;
 
 // ---------------------------------------------------------------------------
 // Scenario definition — fixtures + pressure + grader, loaded from a scenario
@@ -140,8 +140,8 @@ export const ScenarioDefinition = Schema.Struct({
   ),
   /** Shapes this scenario is meaningful under (the sampled matrix). */
   declaredShapes: Schema.Array(ExecutionShape),
-})
-export type ScenarioDefinition = typeof ScenarioDefinition.Type
+});
+export type ScenarioDefinition = typeof ScenarioDefinition.Type;
 
 // ---------------------------------------------------------------------------
 // Run configuration — one benchmark invocation: a scenario fanned across
@@ -162,23 +162,23 @@ export const RunConfig = Schema.Struct({
    * Defaults to Claude Code alone so a config that predates this field
    * still decodes and runs unchanged.
    */
-  harnesses: Schema.optionalWith(Schema.Array(Schema.String), { default: () => ["claude-cli"] }),
+  harnesses: Schema.optionalWith(Schema.Array(Schema.String), { default: () => ['claude-cli'] }),
   shape: ExecutionShape,
   /** Trials per (condition × model × harness) cell. */
   trialsPerCell: Schema.Number,
   /** Hard cap on concurrently running trials. */
   maxConcurrent: Schema.optionalWith(Schema.Number, { default: () => 4 }),
-})
-export type RunConfig = typeof RunConfig.Type
+});
+export type RunConfig = typeof RunConfig.Type;
 
 export const RunRecord = Schema.Struct({
   runId: Schema.String,
   config: RunConfig,
   startedAt: Schema.String,
   endedAt: Schema.optional(Schema.String),
-  status: Schema.Literal("running", "completed", "aborted"),
-})
-export type RunRecord = typeof RunRecord.Type
+  status: Schema.Literal('running', 'completed', 'aborted'),
+});
+export type RunRecord = typeof RunRecord.Type;
 
 // ---------------------------------------------------------------------------
 // Aggregates — what the dashboard and MCP results tools serve. Always derived
@@ -203,5 +203,5 @@ export const CellSummary = Schema.Struct({
   error: Schema.Number,
   /** fail / (pass + fail) — rate of the behaviour manifesting; null until graded trials exist. */
   failRate: Schema.NullOr(Schema.Number),
-})
-export type CellSummary = typeof CellSummary.Type
+});
+export type CellSummary = typeof CellSummary.Type;

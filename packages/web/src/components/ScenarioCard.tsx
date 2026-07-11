@@ -1,5 +1,5 @@
-import type { ScenarioDefinition } from "../api/client"
-import styles from "./ScenarioCard.module.css"
+import type { ScenarioDefinition } from '../api/client';
+import styles from './ScenarioCard.module.css';
 
 export const ScenarioCard = (props: { scenario: ScenarioDefinition }) => (
   <article class={styles.card}>
@@ -8,8 +8,8 @@ export const ScenarioCard = (props: { scenario: ScenarioDefinition }) => (
     <p class={styles.description}>{props.scenario.description}</p>
     <div class={styles.meta}>
       <span>{props.scenario.conditions.length} condition(s)</span>
-      <span>shapes: {props.scenario.declaredShapes.join(", ")}</span>
+      <span>shapes: {props.scenario.declaredShapes.join(', ')}</span>
       <span>v{props.scenario.version}</span>
     </div>
   </article>
-)
+);

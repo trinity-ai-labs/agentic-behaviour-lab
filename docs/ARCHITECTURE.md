@@ -24,7 +24,7 @@ derived from what experiment 001 built by hand.
    a design rule for new scenarios, not a nice-to-have.
 5. **Runner + harness-facts suite** — the deterministic layer is itself a
    re-runnable suite (N=1 per fact) executed against each new harness version.
-   Harness facts are facts *about a version* and must record which.
+   Harness facts are facts _about a version_ and must record which.
 
 **A scenario = fixtures + pressure + grader**, parameterized by shape ×
 subject. The repo ships a pre-composed starter library of generic behaviour
@@ -46,7 +46,7 @@ nightly run with a big budget.
 ## Artifacts: flat files are truth, SQLite is a derived index
 
 Each trial writes `trial.json` + transcript + state logs into the artifact
-store. SQLite is built *from* those files and is always rebuildable
+store. SQLite is built _from_ those files and is always rebuildable
 (`abl reindex`); it is never the source of truth. The lab's core epistemic
 promise — findings re-derivable from committed raw artifacts — dies the moment
 truth lives in an opaque `.db`. Sharing stays file-based: replication means

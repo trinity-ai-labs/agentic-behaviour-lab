@@ -34,7 +34,15 @@
 // `pnpm gate` and a runner gate can never collide.
 
 import { spawn } from 'node:child_process';
-import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -166,10 +174,12 @@ function runCli(argv) {
   // 'exit' fires on normal completion and uncaught errors; the child's signal
   // forwarding turns fatal signals into a normal exit so this runs then too.
   process.on('exit', () => release());
-  acquire({ onWait: (pid) => console.error(`waiting for gate slot held by pid ${pid}`) }).then(() => {
-    process.env[SLOT_ENV] = String(process.pid);
-    spawnCommand();
-  });
+  acquire({ onWait: (pid) => console.error(`waiting for gate slot held by pid ${pid}`) }).then(
+    () => {
+      process.env[SLOT_ENV] = String(process.pid);
+      spawnCommand();
+    },
+  );
 }
 
 // Only run the CLI when invoked directly (`node scripts/gate-slot.mjs …`), not

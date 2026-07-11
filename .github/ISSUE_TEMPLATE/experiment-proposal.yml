@@ -1,6 +1,6 @@
 name: Experiment proposal
 description: Propose a new behavioural experiment
-labels: ["experiment", "proposal"]
+labels: ['experiment', 'proposal']
 body:
   - type: textarea
     id: hypothesis
@@ -14,7 +14,7 @@ body:
     id: subjects
     attributes:
       label: Agents / models under test
-      placeholder: "claude-sonnet-5 via Claude Code Agent tool"
+      placeholder: 'claude-sonnet-5 via Claude Code Agent tool'
     validations:
       required: true
   - type: dropdown

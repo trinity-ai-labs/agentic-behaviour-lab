@@ -1,0 +1,88 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn"],
+  "categories": {
+    "correctness": "off"
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "local/**", "**/*.d.ts"],
+  "rules": {
+    "no-array-constructor": "error",
+    "no-unused-expressions": "error",
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-duplicate-enum-values": "error",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-extra-non-null-assertion": "error",
+    "typescript/no-misused-new": "error",
+    "typescript/no-namespace": "error",
+    "typescript/no-non-null-asserted-optional-chain": "error",
+    "typescript/no-require-imports": "error",
+    "typescript/no-this-alias": "error",
+    "typescript/no-unnecessary-type-constraint": "error",
+    "typescript/no-unsafe-declaration-merging": "error",
+    "typescript/no-unsafe-function-type": "error",
+    "typescript/no-wrapper-object-types": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/prefer-namespace-keyword": "error",
+    "typescript/triple-slash-reference": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+      "rules": {
+        "no-var": "error",
+        "prefer-const": "error",
+        "prefer-rest-params": "error",
+        "prefer-spread": "error"
+      }
+    },
+    {
+      "files": ["packages/web/src/**/*.{ts,tsx}"],
+      "excludeFiles": ["packages/web/src/**/*.test.{ts,tsx}"],
+      "rules": {
+        "solid/jsx-no-duplicate-props": "error",
+        "solid/jsx-no-undef": ["error", { "typescriptEnabled": true }],
+        "solid/jsx-uses-vars": "error",
+        "solid/no-innerhtml": "error",
+        "solid/jsx-no-script-url": "error",
+        "solid/components-return-once": "warn",
+        "solid/no-destructure": "error",
+        "solid/prefer-for": "error",
+        "solid/reactivity": "warn",
+        "solid/event-handlers": "warn",
+        "solid/imports": "warn",
+        "solid/style-prop": "warn",
+        "solid/no-react-deps": "warn",
+        "solid/no-react-specific-props": "warn",
+        "solid/self-closing-comp": "warn"
+      },
+      "jsPlugins": ["eslint-plugin-solid"]
+    },
+    {
+      "files": ["packages/web/src/**/*.test.{ts,tsx}"],
+      "rules": {
+        "solid/reactivity": "off"
+      },
+      "jsPlugins": ["eslint-plugin-solid"]
+    },
+    {
+      "files": ["**/*.{ts,tsx}"],
+      "excludeFiles": ["**/*.d.ts"],
+      "rules": {
+        "max-lines": ["error", { "max": 800, "skipBlankLines": false, "skipComments": false }],
+        "file-size/soft-limit": ["warn", { "soft": 600, "hard": 800 }]
+      },
+      "jsPlugins": ["./eslint-rules/oxlint-file-size-plugin.cjs"]
+    }
+  ]
+}

@@ -9,4 +9,4 @@ export const QUERY_TIERS = {
   semiStable: { staleTime: 30_000, gcTime: 10 * 60_000 },
   /** A running run's detail — polled while trials are landing. */
   live: { staleTime: 2_000, gcTime: 5 * 60_000 },
-} as const
+} as const;

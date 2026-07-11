@@ -10,11 +10,19 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "build": "pnpm -r build",
-    "check": "pnpm -r check",
+    "check": "pnpm -r check && pnpm format:check && pnpm lint",
     "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "oxlint",
     "pre-commit": "pnpm check",
     "gate": "pnpm build && pnpm check && pnpm test",
     "gate:enqueue": "node scripts/enqueue-gate.mjs",
     "gate:drain": "node scripts/gate-runner.mjs"
+  },
+  "devDependencies": {
+    "eslint-plugin-solid": "^0.14.5",
+    "oxlint": "^1.72.0",
+    "prettier": "^3.8.1"
   }
 }

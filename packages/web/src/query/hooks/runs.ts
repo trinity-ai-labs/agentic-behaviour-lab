@@ -1,14 +1,14 @@
-import { createMutation, createQuery, useQueryClient } from "@tanstack/solid-query"
-import { api, type RunConfig } from "../../api/client"
-import { queryKeys } from "../keys"
-import { QUERY_TIERS } from "../tiers"
+import { createMutation, createQuery, useQueryClient } from '@tanstack/solid-query';
+import { api, type RunConfig } from '../../api/client';
+import { queryKeys } from '../keys';
+import { QUERY_TIERS } from '../tiers';
 
 export const useRuns = () =>
   createQuery(() => ({
     queryKey: queryKeys.runs(),
     queryFn: () => api.runs.list(),
     ...QUERY_TIERS.semiStable,
-  }))
+  }));
 
 /**
  * Polls a run's detail while it's still going: `refetchInterval` reads the
@@ -21,16 +21,16 @@ export const useRun = (runId: () => string) =>
     queryFn: () => api.runs.get(runId()),
     enabled: runId().length > 0,
     ...QUERY_TIERS.live,
-    refetchInterval: (query) => (query.state.data?.run.status === "running" ? 1_000 : false),
-  }))
+    refetchInterval: (query) => (query.state.data?.run.status === 'running' ? 1_000 : false),
+  }));
 
 /** POST /api/runs — launches a batch; the launcher navigates to the new run's detail page on success. */
 export const useCreateRun = () => {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return createMutation(() => ({
     mutationFn: (config: RunConfig) => api.runs.create(config),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.runs() })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.runs() });
     },
-  }))
-}
+  }));
+};

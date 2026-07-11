@@ -16,28 +16,28 @@ claude-haiku-4.5. Dispatcher session: claude-fable-5. Raw artifacts under
   (C1-r1: BG-DONE written 37s after turn-end)
 - **F3. Wake-up semantics depend on what the background child is — and how it
   ends.** Three cases, all measured:
-  - *Backgrounded shell task:* completion never re-invokes the turn-ended
+  - _Backgrounded shell task:_ completion never re-invokes the turn-ended
     parent; the notification queues indefinitely and flushes on the next
     resume. (C1-r1: no re-invocation 96s+ after BG-DONE; notification arrived
     only alongside the later debrief message)
-  - *Background agent-child, clean completion:* the parent IS automatically
+  - _Background agent-child, clean completion:_ the parent IS automatically
     re-invoked, ~10s after the child finishes, with the completion
     notification delivered. (C2-r3: child done 21:11:04Z, parent re-invoked
     21:11:14Z, no human input)
-  - *Background agent-child, failure:* no re-invocation — the failure
+  - _Background agent-child, failure:_ no re-invocation — the failure
     notification queues silently. (C2-r2: watchdog killed the child; parent
     never woken, 90s+ window, flushed only by manual resume)
-  A single resume message remains the universal recovery: it delivers the
-  wake-up plus everything shelved behind it.
+    A single resume message remains the universal recovery: it delivers the
+    wake-up plus everything shelved behind it.
 - **F4. Dispatcher visibility is also asymmetric by child type.** A background
   shell task does not block the parent's dispatcher notification (C1:
   "completed" delivered in ~16s, mid-task); a live background agent-child
   suppresses it until the subtree settles — which is sound when the child
   completes (the parent gets woken, finishes, then notifies), but if the child
-  *dies*, nothing ever re-fires and the whole subtree goes permanently silent:
+  _dies_, nothing ever re-fires and the whole subtree goes permanently silent:
   parent internally "completed," dispatcher never told. (C2-r2 vs C2-r3)
 - **F4b. Production reading of F3/F4:** an agent stalled "waiting on its own
-  sub-agent" gets a free wake-up *if and only if* that sub-agent completes
+  sub-agent" gets a free wake-up _if and only if_ that sub-agent completes
   cleanly. A stall that persists therefore means either the child itself died
   (infra species — subtree is dark) or the parent was woken and still didn't
   finish the handoff (behavioural — Tier A measures this rate). Monitors must
@@ -51,9 +51,9 @@ claude-haiku-4.5. Dispatcher session: claude-fable-5. Raw artifacts under
   background-launch result says "You will be notified when it completes" —
   false inside a sub-agent that then ends its turn (F3). A point-of-decision
   signal framing the stall as safe. (C1 interview)
-Tier C is complete: all five probe questions (C1–C5 in DESIGN.md) have
-measured answers across runs C1-r1, C2-r1/r2/r3 and the session-level resume
-demonstrations.
+  Tier C is complete: all five probe questions (C1–C5 in DESIGN.md) have
+  measured answers across runs C1-r1, C2-r1/r2/r3 and the session-level resume
+  demonstrations.
 
 ## Established behavioural findings (single observations, not yet rates)
 
@@ -89,7 +89,7 @@ firing, edits landing) at the moment it was killed. That is direct evidence
 the watchdog can **false-positive on live agents**: "no progress" is being
 measured on some channel other than actual work (hypothesis: the model-stream
 only, blind to tool-execution activity). Consequences: (a) treat
-watchdog-kill notifications as *unverified* stall reports, not ground truth;
+watchdog-kill notifications as _unverified_ stall reports, not ground truth;
 (b) recovery-by-resume remained 100% effective (7/7, full context, zero lost
 work), so the failure costs latency only; (c) the watchdog mechanism itself
 is now a measurement target for this lab — an instrument that kills healthy
@@ -115,8 +115,8 @@ or tuned before Tier A/B runs.
    decision. (Rate experiments for this are Tier A/B, next.)
 
 **Same-day addendum:** during the cluster (user-confirmed across multiple
-independent sessions), the provider status page reported *All Systems
-Operational* with no unresolved incidents — self-reported provider health
+independent sessions), the provider status page reported _All Systems
+Operational_ with no unresolved incidents — self-reported provider health
 does not detect the stream-level degradation that kills agents. Validity
 instrumentation must be built on observed per-trial signals (typed failure
 dispositions, latency, retries), with status feeds as annotation only. (#14

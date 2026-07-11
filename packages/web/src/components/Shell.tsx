@@ -6,10 +6,10 @@
  * provider stack sits between them); the router's `root` component is what
  * actually receives the matched route tree.
  */
-import { A } from "@solidjs/router"
-import type { JSX } from "solid-js"
-import { ThemeToggle } from "./ThemeToggle"
-import styles from "./Shell.module.css"
+import { A } from '@solidjs/router';
+import type { JSX } from 'solid-js';
+import { ThemeToggle } from './ThemeToggle';
+import styles from './Shell.module.css';
 
 export const Shell = (props: { children?: JSX.Element }) => (
   <div class={styles.shell}>
@@ -35,4 +35,4 @@ export const Shell = (props: { children?: JSX.Element }) => (
     </header>
     <main class={styles.main}>{props.children}</main>
   </div>
-)
+);

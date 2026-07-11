@@ -13,21 +13,27 @@
  * `expectedTrials` for the pending-pip count) stays the primary view; the
  * breakdown is corroborating detail, not a second grid.
  */
-import { A, useParams } from "@solidjs/router"
-import { For, Show, createMemo } from "solid-js"
-import type { CellSummary, RunDetail as RunDetailPayload } from "../api/client"
-import { PipGrid } from "../components/PipGrid"
-import { StatusBadge } from "../components/StatusBadge"
-import { failRateOf, formatDuration, formatFailRate, formatTimestamp, shortenHarness } from "../lib/format"
-import { landedCount } from "../lib/verdict"
-import { useResults } from "../query/hooks/results"
-import { useRun } from "../query/hooks/runs"
-import shared from "../styles/shared.module.css"
-import styles from "./RunDetail.module.css"
+import { A, useParams } from '@solidjs/router';
+import { For, Show, createMemo } from 'solid-js';
+import type { CellSummary, RunDetail as RunDetailPayload } from '../api/client';
+import { PipGrid } from '../components/PipGrid';
+import { StatusBadge } from '../components/StatusBadge';
+import {
+  failRateOf,
+  formatDuration,
+  formatFailRate,
+  formatTimestamp,
+  shortenHarness,
+} from '../lib/format';
+import { landedCount } from '../lib/verdict';
+import { useResults } from '../query/hooks/results';
+import { useRun } from '../query/hooks/runs';
+import shared from '../styles/shared.module.css';
+import styles from './RunDetail.module.css';
 
 export const RunDetail = () => {
-  const params = useParams<{ runId: string }>()
-  const runQuery = useRun(() => params.runId)
+  const params = useParams<{ runId: string }>();
+  const runQuery = useRun(() => params.runId);
 
   return (
     <div class={styles.page}>
@@ -39,28 +45,31 @@ export const RunDetail = () => {
       </Show>
       <Show when={runQuery.data}>{(detail) => <RunBody detail={detail()} />}</Show>
     </div>
-  )
-}
+  );
+};
 
 const RunBody = (props: { detail: RunDetailPayload }) => {
-  const multiHarness = createMemo(() => (props.detail.run.config.harnesses?.length ?? 1) > 1)
+  const multiHarness = createMemo(() => (props.detail.run.config.harnesses?.length ?? 1) > 1);
   // Only fetched when the breakdown will actually render (multi-harness run).
-  const resultsQuery = useResults(() => ({ scenarioId: props.detail.run.config.scenarioId }), multiHarness)
+  const resultsQuery = useResults(
+    () => ({ scenarioId: props.detail.run.config.scenarioId }),
+    multiHarness,
+  );
 
   // Grouped once per data change instead of a full filter() scan per cell.
   const breakdownByCell = createMemo(() => {
-    const map = new Map<string, Array<CellSummary>>()
+    const map = new Map<string, Array<CellSummary>>();
     for (const summary of resultsQuery.data ?? []) {
-      const key = `${summary.condition}␟${summary.modelId}`
-      const bucket = map.get(key)
-      if (bucket === undefined) map.set(key, [summary])
-      else bucket.push(summary)
+      const key = `${summary.condition}␟${summary.modelId}`;
+      const bucket = map.get(key);
+      if (bucket === undefined) map.set(key, [summary]);
+      else bucket.push(summary);
     }
-    return map
-  })
+    return map;
+  });
 
   const harnessBreakdown = (condition: string, modelId: string) =>
-    breakdownByCell().get(`${condition}␟${modelId}`) ?? []
+    breakdownByCell().get(`${condition}␟${modelId}`) ?? [];
 
   return (
     <>
@@ -74,7 +83,8 @@ const RunBody = (props: { detail: RunDetailPayload }) => {
         <StatusBadge status={props.detail.run.status} />
       </div>
       <p class={styles.meta}>
-        started {formatTimestamp(props.detail.run.startedAt)} · {formatDuration(props.detail.run.startedAt, props.detail.run.endedAt)}
+        started {formatTimestamp(props.detail.run.startedAt)} ·{' '}
+        {formatDuration(props.detail.run.startedAt, props.detail.run.endedAt)}
       </p>
 
       <div class={styles.cells}>
@@ -93,15 +103,15 @@ const RunBody = (props: { detail: RunDetailPayload }) => {
                 expected={cell.expectedTrials}
               />
               <div class={styles.cellStat}>
-                {formatFailRate(failRateOf(cell.pass, cell.fail), cell.pass, cell.fail)} · {landedCount(cell)}/
-                {cell.expectedTrials} landed
+                {formatFailRate(failRateOf(cell.pass, cell.fail), cell.pass, cell.fail)} ·{' '}
+                {landedCount(cell)}/{cell.expectedTrials} landed
               </div>
               <Show when={multiHarness()}>
                 <ul class={styles.harnessBreakdown}>
                   <For each={harnessBreakdown(cell.condition, cell.modelId)}>
                     {(h) => (
                       <li>
-                        <span class={styles.harnessName}>{shortenHarness(h.harness)}</span>{" "}
+                        <span class={styles.harnessName}>{shortenHarness(h.harness)}</span>{' '}
                         {formatFailRate(h.failRate, h.pass, h.fail)} ({h.trials} trials)
                       </li>
                     )}
@@ -129,5 +139,5 @@ const RunBody = (props: { detail: RunDetailPayload }) => {
         </For>
       </div>
     </>
-  )
-}
+  );
+};

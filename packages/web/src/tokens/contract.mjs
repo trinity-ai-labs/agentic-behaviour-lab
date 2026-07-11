@@ -8,37 +8,37 @@
  */
 export const SEMANTIC_ROLES = [
   // Surfaces
-  "background",
-  "surface",
-  "elevated",
+  'background',
+  'surface',
+  'elevated',
   // Content
-  "foreground",
-  "muted",
+  'foreground',
+  'muted',
   // Brand
-  "primary",
-  "on-primary",
-  "accent",
+  'primary',
+  'on-primary',
+  'accent',
   // Feedback (UI chrome only — verdict pips never use these)
-  "danger",
-  "warning",
-  "success",
-  "info",
+  'danger',
+  'warning',
+  'success',
+  'info',
   // Chrome
-  "border",
-  "input",
-  "ring",
+  'border',
+  'input',
+  'ring',
   // Lab extensions — verdict-* is the fixed Okabe-Ito set; verdict-ring is
   // the edge-contrast ring that flips border/foreground-toned per scheme.
-  "verdict-pass",
-  "verdict-fail",
-  "verdict-inconclusive",
-  "verdict-error",
-  "verdict-ring",
+  'verdict-pass',
+  'verdict-fail',
+  'verdict-inconclusive',
+  'verdict-error',
+  'verdict-ring',
   // Lab extensions — categorical series (model comparisons, etc.)
-  "chart-1",
-  "chart-2",
-  "chart-3",
-  "chart-4",
-  "chart-5",
-  "chart-6",
-]
+  'chart-1',
+  'chart-2',
+  'chart-3',
+  'chart-4',
+  'chart-5',
+  'chart-6',
+];

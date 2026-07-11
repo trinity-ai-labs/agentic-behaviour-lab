@@ -4,7 +4,7 @@
  * in src/app.tsx; anything outside the tree (none yet) would import this
  * directly.
  */
-import { QueryClient } from "@tanstack/solid-query"
+import { QueryClient } from '@tanstack/solid-query';
 
 // staleTime/gcTime deliberately absent: every hook spreads a QUERY_TIERS
 // preset (src/query/tiers.ts), so a default here would be dead code.
@@ -15,4 +15,4 @@ export const queryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});

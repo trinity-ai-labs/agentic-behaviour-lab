@@ -7,17 +7,17 @@
  * server-side); larger ones stay path-only and are shown as such rather
  * than silently omitted.
  */
-import { useParams } from "@solidjs/router"
-import { For, Show } from "solid-js"
-import { VERDICT_META } from "../lib/verdict"
-import { formatTimestamp } from "../lib/format"
-import { useTrial } from "../query/hooks/trials"
-import shared from "../styles/shared.module.css"
-import styles from "./Trial.module.css"
+import { useParams } from '@solidjs/router';
+import { For, Show } from 'solid-js';
+import { VERDICT_META } from '../lib/verdict';
+import { formatTimestamp } from '../lib/format';
+import { useTrial } from '../query/hooks/trials';
+import shared from '../styles/shared.module.css';
+import styles from './Trial.module.css';
 
 export const Trial = () => {
-  const params = useParams<{ trialId: string }>()
-  const trialQuery = useTrial(() => params.trialId)
+  const params = useParams<{ trialId: string }>();
+  const trialQuery = useTrial(() => params.trialId);
 
   return (
     <div class={styles.page}>
@@ -35,7 +35,8 @@ export const Trial = () => {
                 Trial <span class={styles.mono}>{detail().trial.trialId}</span>
               </h1>
               <span class={styles.verdictBadge} data-verdict={detail().trial.verdict.outcome}>
-                {VERDICT_META[detail().trial.verdict.outcome].glyph} {VERDICT_META[detail().trial.verdict.outcome].label}
+                {VERDICT_META[detail().trial.verdict.outcome].glyph}{' '}
+                {VERDICT_META[detail().trial.verdict.outcome].label}
               </span>
             </div>
 
@@ -69,7 +70,9 @@ export const Trial = () => {
                 graded by {detail().trial.verdict.gradedBy}
                 <Show when={detail().trial.verdict.note}>{(note) => <> — {note()}</>}</Show>
               </p>
-              <pre class={styles.artifact}>{JSON.stringify(detail().trial.verdict.detail, null, 2)}</pre>
+              <pre class={styles.artifact}>
+                {JSON.stringify(detail().trial.verdict.detail, null, 2)}
+              </pre>
             </section>
 
             <section class={styles.section}>
@@ -83,7 +86,11 @@ export const Trial = () => {
                     </div>
                     <Show
                       when={detail().inlined[key] !== undefined}
-                      fallback={<p class={shared.status}>too large to inline — see the path above on disk</p>}
+                      fallback={
+                        <p class={shared.status}>
+                          too large to inline — see the path above on disk
+                        </p>
+                      }
                     >
                       <pre class={styles.artifact}>{detail().inlined[key]}</pre>
                     </Show>
@@ -95,5 +102,5 @@ export const Trial = () => {
         )}
       </Show>
     </div>
-  )
-}
+  );
+};
