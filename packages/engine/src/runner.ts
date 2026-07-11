@@ -1,7 +1,7 @@
 /**
  * `Runner` drives one trial (workspace → fixture → subject → grader →
  * `trial.json`) and one batch (a `RunConfig` fanned across conditions ×
- * models × trials-per-cell). A trial's own error channel is `never` by
+ * models × harnesses × trials-per-cell). A trial's own error channel is `never` by
  * design: any stage failure — a broken fixture, a subject spawn error, a
  * grader crash, malformed verdict JSON — is caught and turned into an
  * `outcome: "error"` verdict, because "the harness broke" is itself
@@ -13,7 +13,7 @@ import { Command, CommandExecutor } from "@effect/platform"
 import { Context, Data, Effect, Layer, Schema, Stream } from "effect"
 import { randomUUID } from "node:crypto"
 import * as NodeOs from "node:os"
-import { AgentAdapter } from "./adapter.js"
+import { AdapterRegistry } from "./adapter.js"
 import { TrialIndex, type IndexError } from "./index-db.js"
 import { renderBrief, ScenarioRepo, type LoadedScenario, type ScenarioLoadError } from "./scenarios.js"
 import { ExecutionShape, RunConfig, RunRecord, TrialRecord, Verdict } from "./schema.js"
@@ -33,6 +33,8 @@ export interface RunTrialParams {
   readonly scenario: LoadedScenario
   readonly condition: { readonly label: string; readonly params: Readonly<Record<string, string>> }
   readonly modelId: string
+  /** Harness id resolved through `AdapterRegistry` (e.g. "claude-cli", "codex-cli"). */
+  readonly harness: string
   readonly shape: ExecutionShape
   /** Defaults to a fresh UUID; overridable so callers/tests can pin trial directories. */
   readonly trialId?: string
@@ -59,13 +61,13 @@ const interpreterFor = (scriptPath: string): readonly [string, ...ReadonlyArray<
 export const RunnerLive: Layer.Layer<
   Runner,
   never,
-  ScenarioRepo | ArtifactStore | AgentAdapter | TrialIndex | CommandExecutor.CommandExecutor
+  ScenarioRepo | ArtifactStore | AdapterRegistry | TrialIndex | CommandExecutor.CommandExecutor
 > = Layer.effect(
   Runner,
   Effect.gen(function* () {
     const scenarios = yield* ScenarioRepo
     const store = yield* ArtifactStore
-    const adapter = yield* AgentAdapter
+    const registry = yield* AdapterRegistry
     const index = yield* TrialIndex
     const executor = yield* CommandExecutor.CommandExecutor
 
@@ -119,9 +121,22 @@ export const RunnerLive: Layer.Layer<
         const startedAt = nowIso()
         const trialDir = store.trialDir(params.runId, trialId)
 
+        // The fingerprint must never lack a harness value (unfingerprinted
+        // records are worthless): starts as the requested harness id and is
+        // overwritten with the adapter's versioned id the moment the adapter
+        // resolves — so even a trial whose subject crashes mid-run records
+        // the real executing harness+version.
+        let harness = params.harness
+
         const outcome = yield* Effect.gen(function* () {
           const workspaceDir = yield* store.makeWorkspace(params.runId, trialId)
           yield* runScript(params.scenario.fixturePath, { WORKSPACE_DIR: workspaceDir }, workspaceDir)
+
+          // Resolved inside this same catchAll-guarded block: an unregistered
+          // harness is trial infrastructure failing, exactly like a broken
+          // fixture or a spawn error, so it becomes an "error" verdict too.
+          const adapter = yield* registry.resolve(params.harness)
+          harness = yield* adapter.harnessId
 
           const brief = renderBrief(params.scenario.briefTemplate, params.condition.params)
           const subject = yield* adapter.run({ modelId: params.modelId, brief, workspaceDir })
@@ -149,7 +164,7 @@ export const RunnerLive: Layer.Layer<
           shape: params.shape,
           fingerprint: {
             modelId: params.modelId,
-            harness: yield* adapter.harnessId,
+            harness,
             os: osFingerprint(),
             scenarioVersion: params.scenario.scenarioVersion,
             graderVersion: params.scenario.graderVersion,
@@ -189,13 +204,16 @@ export const RunnerLive: Layer.Layer<
           // Safe: every label in config.conditions was validated against byLabel above.
           const condition = byLabel.get(label)!
           return config.models.flatMap((modelId) =>
-            Array.from({ length: config.trialsPerCell }, () => ({ condition, modelId })),
+            config.harnesses.flatMap((harness) =>
+              Array.from({ length: config.trialsPerCell }, () => ({ condition, modelId, harness })),
+            ),
           )
         })
 
         yield* Effect.forEach(
           cells,
-          ({ condition, modelId }) => runTrial({ runId, scenario, condition, modelId, shape: config.shape }),
+          ({ condition, modelId, harness }) =>
+            runTrial({ runId, scenario, condition, modelId, harness, shape: config.shape }),
           { concurrency: config.maxConcurrent, discard: true },
         )
 
