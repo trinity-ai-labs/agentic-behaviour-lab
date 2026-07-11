@@ -30,6 +30,11 @@ export interface TrialIndexShape {
   readonly reindex: Effect.Effect<void, IndexError>;
   /** Indexes one trial — called right after its `trial.json` is written. */
   readonly insertTrial: (trial: TrialRecord) => Effect.Effect<void, IndexError>;
+  /** Upserts a run's validity into the runs table — called after the run completes and validity is computed. */
+  readonly upsertValidity: (
+    runId: string,
+    validity: 'valid' | 'degraded-conditions',
+  ) => Effect.Effect<void, IndexError>;
   readonly cellSummaries: (
     filter?: CellFilter,
   ) => Effect.Effect<ReadonlyArray<CellSummary>, IndexError>;
@@ -150,28 +155,15 @@ export const TrialIndexLive: Layer.Layer<
     });
 
     const insertTrial: TrialIndexShape['insertTrial'] = (trial) =>
-      Effect.gen(function* () {
-        yield* Effect.try({
-          try: () => void insertStmt.run(rowOf(trial)),
-          catch: failWith('insertTrial'),
-        });
-        // Upsert the run's validity so cell summaries can derive it. The run
-        // record is read from the flat-file store — the SQLite index is derived
-        // from flat files, never the source of truth.
-        const run = yield* store.readRun(trial.runId).pipe(
-          Effect.option,
-          Effect.mapError((cause) => new IndexError({ operation: 'insertTrial:readRun', cause })),
-        );
-        if (Option.isSome(run)) {
-          yield* Effect.try({
-            try: () =>
-              void upsertRunStmt.run({
-                runId: run.value.runId,
-                validity: run.value.validity ?? null,
-              }),
-            catch: failWith('insertTrial:upsertRun'),
-          });
-        }
+      Effect.try({
+        try: () => void insertStmt.run(rowOf(trial)),
+        catch: failWith('insertTrial'),
+      });
+
+    const upsertValidity: TrialIndexShape['upsertValidity'] = (runId, validity) =>
+      Effect.try({
+        try: () => void upsertRunStmt.run({ runId, validity }),
+        catch: failWith('upsertValidity'),
       });
 
     const reindex: TrialIndexShape['reindex'] = Effect.gen(function* () {
@@ -264,6 +256,6 @@ export const TrialIndexLive: Layer.Layer<
         catch: failWith('cellSummaries'),
       });
 
-    return TrialIndex.of({ reindex, insertTrial, cellSummaries });
+    return TrialIndex.of({ reindex, insertTrial, upsertValidity, cellSummaries });
   }),
 );
