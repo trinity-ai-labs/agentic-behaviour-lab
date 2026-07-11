@@ -171,12 +171,41 @@ export const RunConfig = Schema.Struct({
 });
 export type RunConfig = typeof RunConfig.Type;
 
+// ---------------------------------------------------------------------------
+// Subject disposition — what happened when the subject ran.
+// Only 'completed' reaches the grader; everything else gates to an error
+// verdict so provider-level failures never contaminate behaviour rates.
+// ---------------------------------------------------------------------------
+
+export const SubjectDisposition = Schema.Literal(
+  'completed',
+  'crashed',
+  'timeout',
+  'provider-degraded',
+);
+export type SubjectDisposition = typeof SubjectDisposition.Type;
+
+// ---------------------------------------------------------------------------
+// Provider status — best-effort ambient health snapshot from statuspage JSON
+// endpoints. Never blocks a run; only recorded when the fetch succeeds.
+// ---------------------------------------------------------------------------
+
+export const ProviderStatusSnapshot = Schema.Struct({
+  provider: Schema.String,
+  status: Schema.String,
+  fetchedAt: Schema.String,
+  raw: Schema.optional(Schema.String),
+});
+export type ProviderStatusSnapshot = typeof ProviderStatusSnapshot.Type;
+
 export const RunRecord = Schema.Struct({
   runId: Schema.String,
   config: RunConfig,
   startedAt: Schema.String,
   endedAt: Schema.optional(Schema.String),
   status: Schema.Literal('running', 'completed', 'aborted'),
+  providerStatus: Schema.optional(Schema.Array(ProviderStatusSnapshot)),
+  validity: Schema.optional(Schema.Literal('valid', 'degraded-conditions')),
 });
 export type RunRecord = typeof RunRecord.Type;
 
@@ -203,5 +232,6 @@ export const CellSummary = Schema.Struct({
   error: Schema.Number,
   /** fail / (pass + fail) — rate of the behaviour manifesting; null until graded trials exist. */
   failRate: Schema.NullOr(Schema.Number),
+  validity: Schema.optional(Schema.Literal('valid', 'degraded-conditions')),
 });
 export type CellSummary = typeof CellSummary.Type;
