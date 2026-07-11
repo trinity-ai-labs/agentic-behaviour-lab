@@ -52,6 +52,25 @@ harness/        # shared trial-runner tooling (extracted as experiments repeat)
 docs/           # vision, scenario library seeds, methodology
 ```
 
+## Harness support
+
+Trials run through real agentic CLIs. A run config picks its harnesses with
+the `harnesses` field (default `["claude-cli"]`), fanned against conditions ×
+models exactly like the model-comparison axis — so "same scenario, compare by
+CLI" works out of the box. Every trial records the exact harness + version
+that executed it in its fingerprint.
+
+| Harness id | CLI | Headless invocation | Model ids |
+|---|---|---|---|
+| `claude-cli` | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `claude -p --model <id> --permission-mode bypassPermissions --output-format json` | Anthropic + whatever the local `claude` install is configured for |
+| `codex-cli` | [Codex](https://github.com/openai/codex) | `codex exec --model <id> --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --output-last-message <file>` | OpenAI + compatible providers per the local `codex` config |
+
+Model ids are harness-scoped and passed through unvalidated — an id the CLI
+does not recognize fails that trial with an `error` verdict, which is the
+correct record of what happened. Both CLIs must be installed and
+authenticated locally; tests never invoke either (a stub adapter covers every
+test path).
+
 ## MCP server
 
 `@abl/mcp` exposes the lab to agents over stdio — list scenarios, launch
