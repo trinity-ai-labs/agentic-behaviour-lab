@@ -7,6 +7,10 @@
 import { FileSystem, HttpApiBuilder, Path } from '@effect/platform';
 import {
   ArtifactStore,
+  getModelEffortLevels,
+  KeyStore,
+  KeyStoreError,
+  MODEL_PROVIDERS,
   ScenarioRepo,
   TrialIndex,
   type CellFilter,
@@ -16,7 +20,9 @@ import {
 import { Effect, Layer, Option } from 'effect';
 import {
   AblApi,
+  AblApiWithKeys,
   INLINE_ARTIFACT_LIMIT,
+  KeyStoreWireError,
   RunNotFound,
   TrialNotFound,
   type CellProgress,
@@ -184,7 +190,70 @@ export const TrialsLive = HttpApiBuilder.group(AblApi, 'trials', (handlers) =>
   }),
 );
 
-/** The whole API, ready to serve — requires the engine plus FileSystem/Path/CommandExecutor. */
+export const ModelsLive = HttpApiBuilder.group(AblApi, 'models', (handlers) =>
+  handlers.handle('list', () =>
+    Effect.succeed(
+      MODEL_PROVIDERS.map((group) => ({
+        provider: group.provider,
+        label: group.label,
+        models: group.models.map((m) => ({
+          value: m.value,
+          label: m.label,
+          intelligence: m.intelligence,
+          effortLevels: [...getModelEffortLevels(m.value)],
+          ...(m.status !== undefined ? { status: m.status } : {}),
+        })),
+      })),
+    ),
+  ),
+);
+
+export const KeysLive = HttpApiBuilder.group(AblApiWithKeys, 'keys', (handlers) =>
+  handlers
+    .handle('list', () =>
+      Effect.flatMap(KeyStore, (keys) =>
+        keys.list.pipe(
+          Effect.map((providers) =>
+            providers.map((provider) => ({
+              provider,
+              configured: true,
+            })),
+          ),
+        ),
+      ).pipe(Effect.orDie),
+    )
+    .handle('set', ({ payload }) =>
+      Effect.flatMap(KeyStore, (keys) =>
+        keys.set(payload.provider, payload.key).pipe(
+          Effect.map(() => ({ ok: true } as const)),
+          Effect.catchTags({
+            KeyStoreError: (e) =>
+              Effect.fail(new KeyStoreWireError({ reason: `${e.operation}: ${String(e.cause)}` })),
+          }),
+        ),
+      ),
+    )
+    .handle('delete', ({ path }) =>
+      Effect.flatMap(KeyStore, (keys) =>
+        keys.delete(path.provider).pipe(
+          Effect.map(() => ({ ok: true } as const)),
+          Effect.catchTags({
+            KeyStoreError: (e) =>
+              Effect.fail(new KeyStoreWireError({ reason: `${e.operation}: ${String(e.cause)}` })),
+          }),
+        ),
+      ),
+    ),
+);
+
+/** The whole API excluding key management (no KeyStore requirement). */
 export const ApiLive = HttpApiBuilder.api(AblApi).pipe(
-  Layer.provide([ScenariosLive, RunsLive, ResultsLive, TrialsLive, AuthoringLive()]),
+  Layer.provide([ScenariosLive, RunsLive, ResultsLive, TrialsLive, AuthoringLive(), ModelsLive]),
+);
+
+/**
+ * Full API including key management. Requires `KeyStore` (provided by `EngineLive`).
+ */
+export const ApiLiveWithKeys = HttpApiBuilder.api(AblApiWithKeys).pipe(
+  Layer.provide([ScenariosLive, RunsLive, ResultsLive, TrialsLive, AuthoringLive(), ModelsLive, KeysLive]),
 );

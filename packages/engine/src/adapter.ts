@@ -34,6 +34,8 @@ export interface AgentAdapterShape {
     readonly modelId: string;
     readonly brief: string;
     readonly workspaceDir: string;
+    /** Extra env vars to inject for provider routing — merged into the subprocess env. */
+    readonly env?: Record<string, string>;
   }) => Effect.Effect<SubjectResult, AgentRunError>;
 }
 
@@ -41,6 +43,37 @@ export class AgentAdapter extends Context.Tag('@abl/engine/AgentAdapter')<
   AgentAdapter,
   AgentAdapterShape
 >() {}
+
+// ---------------------------------------------------------------------------
+// Env isolation — strip model-resolver-owned vars from inherited env
+// so a host-level value (e.g. ANTHROPIC_BASE_URL from the user's shell
+// DeepSeek config) doesn't bleed into a trial with a different provider.
+// Only the resolver and harness set these; everything else inherits.
+// ---------------------------------------------------------------------------
+
+/** Env vars the model resolver or harness owns — must never be inherited from the host. */
+const MODEL_OWNED_VARS = [
+  'ANTHROPIC_BASE_URL',
+  'ANTHROPIC_API_KEY',
+  'ANTHROPIC_AUTH_TOKEN',
+  'OPENAI_API_KEY',
+  'XAI_API_KEY',
+  'API_TIMEOUT_MS',
+  'CLAUDE_CODE_EFFORT_LEVEL',
+] as const;
+
+/**
+ * Build an env baseline that strips model-owned vars from the host, then
+ * merges the provider-routing `extra` on top. Used by both CLI adapters so
+ * only the resolver controls these vars.
+ */
+const harnessEnv = (extra?: Record<string, string>): Record<string, string> => {
+  const stripped: Record<string, string> = {};
+  for (const v of MODEL_OWNED_VARS) {
+    stripped[v] = '';
+  }
+  return { ...stripped, ...extra };
+};
 
 // ---------------------------------------------------------------------------
 // Provider degradation pattern tables
@@ -173,8 +206,8 @@ export const ClaudeCliAdapterLive: Layer.Layer<
     const version = yield* probeVersion(executor, 'claude');
     const harness = `claude-code/${version} (headless -p)`;
 
-    const run: AgentAdapterShape['run'] = ({ modelId, brief, workspaceDir }) => {
-      const command = Command.make(
+    const run: AgentAdapterShape['run'] = ({ modelId, brief, workspaceDir, env }) => {
+      let command = Command.make(
         'claude',
         '-p',
         brief,
@@ -185,6 +218,10 @@ export const ClaudeCliAdapterLive: Layer.Layer<
         '--output-format',
         'json',
       ).pipe(Command.workingDirectory(workspaceDir));
+
+      // Strip model-owned vars from the host env, then merge provider-routing
+      // vars on top — only the resolver controls these.
+      command = command.pipe(Command.env(harnessEnv(env)));
 
       return runWithDetails(executor, command).pipe(
         Effect.map(({ stdout, stderr, exitCode }) => {
@@ -240,11 +277,11 @@ export const CodexCliAdapterLive: Layer.Layer<
     const version = yield* probeVersion(executor, 'codex');
     const harness = `${CODEX_CLI_HARNESS}/${version} (exec)`;
 
-    const run: AgentAdapterShape['run'] = ({ modelId, brief, workspaceDir }) =>
+    const run: AgentAdapterShape['run'] = ({ modelId, brief, workspaceDir, env }) =>
       Effect.scoped(
         Effect.gen(function* () {
           const outputFile = yield* fs.makeTempFileScoped({ prefix: 'abl-codex-' });
-          const command = Command.make(
+          let command = Command.make(
             'codex',
             'exec',
             '--model',
@@ -255,6 +292,10 @@ export const CodexCliAdapterLive: Layer.Layer<
             outputFile,
             brief,
           ).pipe(Command.workingDirectory(workspaceDir));
+
+          // Strip model-owned vars from the host env, then merge
+          // provider-routing vars on top.
+          command = command.pipe(Command.env(harnessEnv(env)));
 
           const { stderr, exitCode } = yield* runWithDetails(executor, command);
           const finalMessage = (yield* fs.readFileString(outputFile)).trim();

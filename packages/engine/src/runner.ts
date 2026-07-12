@@ -21,7 +21,10 @@ import { randomUUID } from 'node:crypto';
 import * as NodeOs from 'node:os';
 import { AdapterRegistry } from './adapter.js';
 import type { SubjectDisposition } from './adapter.js';
+import { getProviderForHarness, parseModelId } from './catalog.js';
 import { TrialIndex, type IndexError } from './index-db.js';
+import { KeyStore } from './keys.js';
+import { resolveModelEnv } from './provider-routing.js';
 import {
   renderBrief,
   ScenarioRepo,
@@ -80,12 +83,10 @@ const fetchProviderStatus = (
 
 /**
  * Maps a harness id to its likely provider for status lookups.
- * Best-effort; unknown harnesses map to undefined and are skipped.
+ * Uses the catalog for known harnesses; falls back to string matching for versioned ids.
  */
 const harnessProvider = (harness: string): string | undefined => {
-  if (harness === 'claude-cli' || harness.startsWith('claude-code')) return 'anthropic';
-  if (harness === 'codex-cli' || harness.startsWith('codex')) return 'openai';
-  return undefined;
+  return getProviderForHarness(harness);
 };
 
 /** Fetch provider status for every unique provider among the requested harnesses. */
@@ -146,7 +147,7 @@ const interpreterFor = (scriptPath: string): readonly [string, ...ReadonlyArray<
 export const RunnerLive: Layer.Layer<
   Runner,
   never,
-  ScenarioRepo | ArtifactStore | AdapterRegistry | TrialIndex | CommandExecutor.CommandExecutor
+  ScenarioRepo | ArtifactStore | AdapterRegistry | TrialIndex | KeyStore | CommandExecutor.CommandExecutor
 > = Layer.effect(
   Runner,
   Effect.gen(function* () {
@@ -154,6 +155,7 @@ export const RunnerLive: Layer.Layer<
     const store = yield* ArtifactStore;
     const registry = yield* AdapterRegistry;
     const index = yield* TrialIndex;
+    const keys = yield* KeyStore;
     const executor = yield* CommandExecutor.CommandExecutor;
 
     const runCaptured = (
@@ -242,7 +244,29 @@ export const RunnerLive: Layer.Layer<
           harness = yield* adapter.harnessId;
 
           const brief = renderBrief(params.scenario.briefTemplate, params.condition.params);
-          const subject = yield* adapter.run({ modelId: params.modelId, brief, workspaceDir });
+
+          // Resolve provider-routing env vars. Keys are looked up from env
+          // vars first, then the encrypted store. Swallowed on failure: a
+          // missing key or unknown provider leaves env empty, and the
+          // subprocess will fail naturally — the degradation pattern matcher
+          // catches provider auth errors downstream.
+          const { provider } = parseModelId(params.modelId);
+          const env = yield* Effect.gen(function* () {
+            const secrets: Record<string, string> = {};
+            const key = yield* keys.resolve(provider).pipe(Effect.catchAll(() => Effect.succeed(undefined)));
+            if (key !== undefined) {
+              const keyName = `${provider.toUpperCase()}_API_KEY`;
+              secrets[keyName] = key;
+            }
+            return resolveModelEnv(params.modelId, secrets).env;
+          }).pipe(Effect.catchAll(() => Effect.succeed({} as Record<string, string>)));
+
+          const subject = yield* adapter.run({
+            modelId: params.modelId,
+            brief,
+            workspaceDir,
+            env,
+          });
 
           // -- Grading gate: only 'completed' dispositions reach the grader. --
           if (subject.disposition !== 'completed') {

@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AblApi } from '../src/api.js';
 import { AuthorAgentStubLive, AuthoringLive } from '../src/authoring.js';
-import { ResultsLive, RunsLive, ScenariosLive, TrialsLive } from '../src/handlers.js';
+import { ModelsLive, ResultsLive, RunsLive, ScenariosLive, TrialsLive } from '../src/handlers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, 'fixtures', 'authoring');
@@ -31,6 +31,7 @@ const serverLayer = (ablHome: string, authorScriptPath: string) =>
           RunsLive,
           ResultsLive,
           TrialsLive,
+          ModelsLive,
           AuthoringLive(ablHome, AuthorAgentStubLive(authorScriptPath)),
         ]),
       ),

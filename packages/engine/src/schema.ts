@@ -214,6 +214,51 @@ export type RunRecord = typeof RunRecord.Type;
 // from trial records, never stored as truth.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Model catalog types — static at runtime, but schema-typed so the web layer
+// and MCP server share the same shapes.
+// ---------------------------------------------------------------------------
+
+export const ModelProvider = Schema.Literal(
+  'anthropic',
+  'deepseek',
+  'moonshot',
+  'zai',
+  'qwen',
+  'xiaomi',
+  'ollama',
+  'openai',
+  'xai',
+);
+export type ModelProvider = typeof ModelProvider.Type;
+
+export const ModelTier = Schema.Literal('reasoning', 'standard', 'fast', 'micro');
+export type ModelTier = typeof ModelTier.Type;
+
+export const IntelligenceLevel = Schema.Number.pipe(Schema.between(1, 4));
+export type IntelligenceLevel = typeof IntelligenceLevel.Type;
+
+export const ModelEntry = Schema.Struct({
+  value: Schema.String,
+  label: Schema.String,
+  intelligence: IntelligenceLevel,
+  status: Schema.optional(Schema.Literal('active', 'deprecated')),
+});
+export type ModelEntry = typeof ModelEntry.Type;
+
+export const ProviderGroup = Schema.Struct({
+  provider: ModelProvider,
+  label: Schema.String,
+  models: Schema.Array(ModelEntry),
+});
+export type ProviderGroup = typeof ProviderGroup.Type;
+
+export const HarnessDef = Schema.Struct({
+  id: Schema.String,
+  supportedProviders: Schema.Array(ModelProvider),
+});
+export type HarnessDef = typeof HarnessDef.Type;
+
 export const CellSummary = Schema.Struct({
   scenarioId: Schema.String,
   condition: Schema.String,

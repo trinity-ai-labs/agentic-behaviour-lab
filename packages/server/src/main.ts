@@ -19,7 +19,7 @@ import { Config, Effect, Layer } from 'effect';
 import { createServer } from 'node:http';
 import * as NodePath from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ApiLive } from './handlers.js';
+import { ApiLiveWithKeys } from './handlers.js';
 import { withStaticDashboard } from './static.js';
 
 /** `packages/server/dist` at runtime — the anchor for sibling-package paths. */
@@ -54,7 +54,7 @@ const ServerLive = Layer.unwrapEffect(
 
 const MainLive = HttpApiBuilder.serve(withStaticDashboard(webDist)).pipe(
   HttpServer.withLogAddress,
-  Layer.provide(ApiLive),
+  Layer.provide(ApiLiveWithKeys),
   Layer.provide(EngineLive({ scenarioRoots: scenarioRoots(), adapters: cliAdapters })),
   Layer.provide(ServerLive),
   Layer.provide(NodeContext.layer),

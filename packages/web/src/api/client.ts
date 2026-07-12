@@ -66,6 +66,25 @@ export interface ResultsFilter {
   readonly harness?: string;
 }
 
+export interface ModelEntry {
+  readonly value: string;
+  readonly label: string;
+  readonly intelligence: number;
+  readonly effortLevels: ReadonlyArray<string>;
+  readonly status?: 'active' | 'deprecated';
+}
+
+export interface ProviderGroup {
+  readonly provider: string;
+  readonly label: string;
+  readonly models: ReadonlyArray<ModelEntry>;
+}
+
+export interface KeyStatus {
+  readonly provider: string;
+  readonly configured: boolean;
+}
+
 const toQueryString = (filter: ResultsFilter): string => {
   const params = new URLSearchParams();
   if (filter.scenarioId !== undefined) params.set('scenarioId', filter.scenarioId);
@@ -95,5 +114,8 @@ export const api = {
   trials: {
     get: (trialId: string): Promise<TrialDetail> =>
       request(`/trials/${encodeURIComponent(trialId)}`),
+  },
+  models: {
+    list: (): Promise<ReadonlyArray<ProviderGroup>> => request('/models'),
   },
 };

@@ -46,3 +46,30 @@ export type { RunBatchError, RunnerShape, RunTrialError, RunTrialParams } from '
 
 export { EngineLive } from './engine.js';
 export type { EngineConfig } from './engine.js';
+
+export {
+  DEFAULT_HARNESS_ID,
+  getHarnessDef,
+  getHarnessForProvider,
+  getModelIntelligence,
+  getModelLabel,
+  getProviderForHarness,
+  HARNESSES,
+  MODEL_PROVIDERS,
+  clampEffortForModel,
+  EFFORT_ORDER,
+  getModelEffortLevels,
+  MODEL_EFFORT_SUPPORT,
+  modelMeetsTierFloor,
+  parseModelId,
+  parseModelSelection,
+  TIER_FALLBACK_MODEL_ID,
+  TIER_MIN_INTELLIGENCE,
+} from './catalog.js';
+export type { EffortLevel } from './catalog.js';
+
+export { KeyNotFound, KeyStore, KeyStoreError, KeyStoreLive, KeyStoreStub } from './keys.js';
+export type { KeyStoreShape } from './keys.js';
+
+export { providerRequiresKey, resolveModelEnv, resolveModelHarness } from './provider-routing.js';
+export type { ModelEnvResult } from './provider-routing.js';

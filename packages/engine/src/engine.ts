@@ -11,6 +11,7 @@ import { CommandExecutor, FileSystem, Path } from '@effect/platform';
 import { Layer } from 'effect';
 import { AdapterRegistryLive, type AdapterMap } from './adapter.js';
 import { IndexError, TrialIndex, TrialIndexLive } from './index-db.js';
+import { KeyStore, KeyStoreError, KeyStoreLive } from './keys.js';
 import { Runner, RunnerLive } from './runner.js';
 import { ScenarioRepo, ScenarioRepoLive } from './scenarios.js';
 import { ArtifactStore, ArtifactStoreLive } from './store.js';
@@ -32,16 +33,17 @@ export interface EngineConfig {
 export const EngineLive = (
   config: EngineConfig,
 ): Layer.Layer<
-  Runner | ArtifactStore | ScenarioRepo | TrialIndex,
-  IndexError,
+  Runner | ArtifactStore | ScenarioRepo | TrialIndex | KeyStore,
+  IndexError | KeyStoreError,
   FileSystem.FileSystem | Path.Path | CommandExecutor.CommandExecutor
 > => {
   const store = ArtifactStoreLive(config.ablHome);
   const scenarios = ScenarioRepoLive(config.scenarioRoots);
   const index = TrialIndexLive.pipe(Layer.provide(store));
+  const keys = KeyStoreLive(config.ablHome);
   const registry = AdapterRegistryLive(config.adapters);
-  const runner = RunnerLive.pipe(Layer.provide(Layer.mergeAll(scenarios, store, registry, index)));
+  const runner = RunnerLive.pipe(Layer.provide(Layer.mergeAll(scenarios, store, registry, index, keys)));
   // The same layer references appear in several places; layer memoization
   // builds each service once and shares it across every consumer.
-  return Layer.mergeAll(runner, store, scenarios, index);
+  return Layer.mergeAll(runner, store, scenarios, index, keys);
 };

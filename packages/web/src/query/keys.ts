@@ -12,4 +12,5 @@ export const queryKeys = {
   run: (runId: string) => ['runs', runId] as const,
   results: (filter: ResultsFilter = {}) => ['results', filter] as const,
   trial: (trialId: string) => ['trials', trialId] as const,
+  models: () => ['models'] as const,
 };

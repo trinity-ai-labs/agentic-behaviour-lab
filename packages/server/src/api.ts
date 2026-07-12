@@ -200,10 +200,88 @@ const AuthoringGroup = HttpApiGroup.make('authoring')
       .addError(ScenarioSaveInvalid),
   );
 
+// ---------------------------------------------------------------------------
+// Model catalog — read-only, served from the static engine catalog.
+// ---------------------------------------------------------------------------
+
+const ModelEntrySchema = Schema.Struct({
+  value: Schema.String,
+  label: Schema.String,
+  intelligence: Schema.Number,
+  effortLevels: Schema.Array(Schema.String),
+  status: Schema.optional(Schema.Literal('active', 'deprecated')),
+});
+
+const ModelsGroup = HttpApiGroup.make('models').add(
+  HttpApiEndpoint.get('list', '/models').addSuccess(
+    Schema.Array(
+      Schema.Struct({
+        provider: Schema.String,
+        label: Schema.String,
+        models: Schema.Array(ModelEntrySchema),
+      }),
+    ),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Key management — list configured providers (redacted), set/delete keys.
+// ---------------------------------------------------------------------------
+
+export const KeyStatus = Schema.Struct({
+  provider: Schema.String,
+  configured: Schema.Boolean,
+});
+export type KeyStatus = typeof KeyStatus.Type;
+
+export const SetKeyRequest = Schema.Struct({
+  provider: Schema.String,
+  key: Schema.String,
+});
+export type SetKeyRequest = typeof SetKeyRequest.Type;
+
+export class KeyStoreWireError extends Schema.TaggedError<KeyStoreWireError>()(
+  'KeyStoreWireError',
+  { reason: Schema.String },
+  HttpApiSchema.annotations({ status: 500 }),
+) {}
+
+const providerParam = HttpApiSchema.param('provider', Schema.String);
+
+const KeysGroup = HttpApiGroup.make('keys')
+  .add(HttpApiEndpoint.get('list', '/keys').addSuccess(Schema.Array(KeyStatus)))
+  .add(
+    HttpApiEndpoint.post('set', '/keys')
+      .setPayload(SetKeyRequest)
+      .addSuccess(Schema.Struct({ ok: Schema.Boolean }))
+      .addError(KeyStoreWireError),
+  )
+  .add(
+    HttpApiEndpoint.del('delete')`/keys/${providerParam}`
+      .addSuccess(Schema.Struct({ ok: Schema.Boolean }))
+      .addError(KeyStoreWireError),
+  );
+
 export const AblApi = HttpApi.make('abl')
   .add(ScenariosGroup)
   .add(RunsGroup)
   .add(ResultsGroup)
   .add(TrialsGroup)
   .add(AuthoringGroup)
+  .add(ModelsGroup)
+  .prefix('/api');
+
+/**
+ * Extended API including key management under `/api/keys`. Requires `KeyStore`
+ * (provided by `EngineLive`). Separate from `AblApi` so tests that compose a
+ * custom layer with only `ApiLive` don't need to provide `KeyStore`.
+ */
+export const AblApiWithKeys = HttpApi.make('abl')
+  .add(ScenariosGroup)
+  .add(RunsGroup)
+  .add(ResultsGroup)
+  .add(TrialsGroup)
+  .add(AuthoringGroup)
+  .add(ModelsGroup)
+  .add(KeysGroup)
   .prefix('/api');

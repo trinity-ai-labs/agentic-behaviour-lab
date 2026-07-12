@@ -5,5 +5,5 @@
  * server in another layer graph (the tests serve it on an ephemeral port).
  */
 export * from './api.js';
-export { ApiLive } from './handlers.js';
+export { ApiLive, ApiLiveWithKeys, KeysLive, ModelsLive } from './handlers.js';
 export { withStaticDashboard } from './static.js';

@@ -11,6 +11,8 @@ import {
   RunConfig,
   type ArtifactStore,
   type IndexError,
+  type KeyStore,
+  type KeyStoreError,
   type Runner,
   type ScenarioRepo,
   type TrialIndex,
@@ -28,9 +30,9 @@ import * as Lab from './lab.js';
 
 /** Everything a tool handler may reach for; `main.ts` and the tests both provide it (engine + platform services). */
 export type LabServices =
-  Runner | ArtifactStore | ScenarioRepo | TrialIndex | FileSystem.FileSystem | Path.Path;
+  Runner | ArtifactStore | ScenarioRepo | TrialIndex | KeyStore | FileSystem.FileSystem | Path.Path;
 
-export type LabRuntime = ManagedRuntime.ManagedRuntime<LabServices, IndexError>;
+export type LabRuntime = ManagedRuntime.ManagedRuntime<LabServices, IndexError | KeyStoreError>;
 
 const decodeRunConfig = Schema.decodeUnknown(RunConfig);
 
@@ -132,6 +134,14 @@ export const makeLabServer = (runtime: LabRuntime): Server => {
     inputSchema: Record<string, unknown>;
     handler: (args: Record<string, unknown>) => Promise<ToolResult>;
   }> = [
+    {
+      name: 'lab_list_models',
+      title: 'List model catalog',
+      description:
+        'Lists every model in the catalog grouped by provider. Each model has a compound id (provider:model), a human-readable label, and an intelligence level (1-4).',
+      inputSchema: { type: 'object', properties: {} },
+      handler: () => runTool(runtime, Lab.listModels),
+    },
     {
       name: 'lab_list_scenarios',
       title: 'List scenarios',

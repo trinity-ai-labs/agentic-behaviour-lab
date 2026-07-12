@@ -18,7 +18,9 @@
     "pre-commit": "pnpm check",
     "gate": "pnpm build && pnpm check && pnpm test",
     "gate:enqueue": "node scripts/enqueue-gate.mjs",
-    "gate:drain": "node scripts/gate-runner.mjs"
+    "gate:drain": "node scripts/gate-runner.mjs",
+    "dev": "pnpm --filter @abl/server dev",
+    "dev:web": "pnpm --filter @abl/web dev"
   },
   "devDependencies": {
     "eslint-plugin-solid": "^0.14.5",

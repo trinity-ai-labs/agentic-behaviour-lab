@@ -8,6 +8,7 @@
  */
 import {
   ArtifactStore,
+  MODEL_PROVIDERS,
   Runner,
   ScenarioRepo,
   StoreError,
@@ -46,6 +47,23 @@ export const listScenarios = Effect.gen(function* () {
     declaredShapes: definition.declaredShapes,
   }));
 });
+
+/**
+ * The model catalog as a flat list of provider groups — served to agents so
+ * they know which model ids are valid before launching a run.
+ */
+export const listModels = Effect.succeed(
+  MODEL_PROVIDERS.map((group) => ({
+    provider: group.provider,
+    label: group.label,
+    models: group.models.map((m) => ({
+      value: m.value,
+      label: m.label,
+      intelligence: m.intelligence,
+      ...(m.status !== undefined ? { status: m.status } : {}),
+    })),
+  })),
+);
 
 // ---------------------------------------------------------------------------
 // Run registry — fire-and-poll
