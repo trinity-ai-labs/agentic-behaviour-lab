@@ -49,7 +49,7 @@ run artifacts live under `experiments/`.
 ## Stack
 
 - Backend: TypeScript, Effect v3 (`effect`, `@effect/platform`) — invoke the
-  `effect` skill before writing Effect code.
+  `effect-v3` skill before writing Effect code.
 - **Full Effect, no parallel schema vocabularies.** Effect `Schema` is the
   only validation/serialization library; typed failures are `Data.TaggedError`
   (or `Schema.TaggedError` on the wire) — never string-matched errors. Where a
